@@ -29,4 +29,7 @@ class Mailbox
     @consumers.push consumer
     undefined
 
+  hasConsumers: ->
+    @consumers.length > 0
+
 WebActors.Mailbox = Mailbox
