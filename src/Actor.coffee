@@ -17,6 +17,9 @@ wrap_actor_cont = (actor, cont, args) ->
     try
       cont.apply(this, args)
     finally
+      if not actor.mailbox.hasConsumers()
+          # reap dead actor
+          delete actors_by_id[actor.actor_id]
       current_actor = null
 
 spawn = (body) ->
