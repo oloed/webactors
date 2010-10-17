@@ -10,7 +10,7 @@ describe "A WebActors Actor", ->
     got_id = null
 
     actor_id = WebActors.spawn ->
-      got_id = WebActors.get_current()
+      got_id = WebActors.get_self()
       
     waitsFor -> got_id is actor_id
 

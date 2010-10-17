@@ -43,10 +43,10 @@ receive = (pairs...) ->
         return wrap_actor_cont(actor, cont, captured)
     return null
 
-get_current = ->
+get_self = ->
   current_actor.actor_id
 
 @WebActors.spawn = spawn
 @WebActors.send = send
 @WebActors.receive = receive
-@WebActors.get_current = get_current
+@WebActors.get_self = get_self
