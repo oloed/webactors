@@ -25,3 +25,21 @@ describe "WebActors.match", ->
 
   it "should not match objects with missing fields", ->
     expect(WebActors.match({a: 3, b: 4}, {a: 3})).toEqual null
+
+  it "should support simple capture", ->
+    expect(WebActors.match(WebActors.capture, 42)).toEqual [42]
+
+  it "should support restricted capture", ->
+    expect(WebActors.match(WebActors.capture(42), 38)).toEqual null
+    expect(WebActors.match(WebActors.capture(42), 42)).toEqual [42]
+
+  it "should support destructuring capture", ->
+    expect(WebActors.match([WebActors.capture, "b", WebActors.capture], ["a", "b", "c"])).toEqual ["a", "c"]
+
+  it "should support wildcards", ->
+    expect(WebActors.match(WebActors.any, 42)).toEqual []
+    expect(WebActors.match(WebActors.any, "testing")).toEqual []
+
+describe "WebActors.$$", ->
+  it "should be an alias for WebActors.capture", ->
+    expect(WebActors.$$).toEqual(WebActors.capture)
