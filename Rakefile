@@ -3,9 +3,12 @@ require 'rake/clean'
 DIST_DIR = "dist"
 RELEASE_FILE = File.join(DIST_DIR, "webactors.js")
 
-COFFEE_SCRIPTS = FileList['src/*.coffee', 'spec/*.coffee']
-JAVASCRIPTS = COFFEE_SCRIPTS.map { |s| s.sub(/\.coffee$/, '.js') }
-CLOBBER << JAVASCRIPTS
+JAVASCRIPTS = FileList['src/*.coffee'].map { |s| s.sub(/\.coffee$/, '.js') }
+JAVASCRIPT_SPECS = FileList['spec/*.coffee'].map { |s| s.sub(/\.coffee$/, '.js') }
+
+CLEAN << JAVASCRIPTS
+CLEAN << JAVASCRIPT_SPECS
+CLOBBER << RELEASE_FILE
 
 rule '.js' => '.coffee' do |t|
   sh "coffee", "-c", t.source
