@@ -1,4 +1,9 @@
+begin
+  require 'rubygems'
+rescue LoadError
+end
 require 'rake/clean'
+require 'coffee_script'
 
 DIST_DIR = "dist"
 RELEASE_FILE = File.join(DIST_DIR, "webactors.js")
@@ -11,7 +16,11 @@ CLEAN << JAVASCRIPT_SPECS
 CLOBBER << RELEASE_FILE
 
 rule '.js' => '.coffee' do |t|
-  sh "coffee", "-c", t.source
+  File.open t.name, "w" do |output|
+    File.open t.source, "r" do |input|
+      output.write CoffeeScript.compile(input.read)
+    end
+  end
 end
 
 desc "Build files"
