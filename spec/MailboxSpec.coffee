@@ -91,13 +91,3 @@ describe "Mailbox", ->
       waitsFor -> received.length >= 2
 
       runs -> expect(received).toEqual ["b", "a"]
-
-  it "indicates whether it has consumers", ->
-    mailbox = new WebActors.Mailbox()
-
-    expect(mailbox.hasConsumers()).toEqual(false) 
-
-    mailbox.consumeOnce (message) ->
-      return null
-
-    expect(mailbox.hasConsumers()).toEqual(true) 
