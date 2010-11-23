@@ -57,3 +57,69 @@ describe "A WebActors Actor", ->
       WebActors.receive "foo", -> completed = true
     
     waitsFor -> completed
+
+  it "should support exit notification", ->
+    received = []
+
+    actor_a_id = WebActors.spawn ->
+      WebActors.trap_exit (exited, reason) -> [exited, reason]
+
+      WebActors.receive $$, (m) ->
+        received.push m
+
+    actor_b_id = WebActors.spawn ->
+      WebActors.send_exit actor_a_id, "foobar"
+
+    waitsFor -> received.length >= 1
+
+    runs -> expect(received).toEqual([[actor_b_id, "foobar"]])
+
+  it "should send exit notifications when linked actors exit normally", ->
+    received = []
+
+    actor_a_id = WebActors.spawn ->
+      WebActors.trap_exit (exited, reason) -> [exited, reason]
+
+      WebActors.receive $$, (m) ->
+        received.push m
+
+    actor_b_id = WebActors.spawn ->
+      WebActors.link actor_a_id
+
+    waitsFor -> received.length >= 1
+
+    runs -> expect(received).toEqual([[actor_b_id, null]])
+
+  it "should propagate exit notifications across linked actors", ->
+    received = []
+
+    actor_a_id = WebActors.spawn ->
+      WebActors.trap_exit (exited, reason) -> [exited, reason]
+      WebActors.receive $$, (m) -> received.push m
+
+    actor_b_id = WebActors.spawn ->
+      WebActors.link actor_a_id
+      WebActors.receive $_, ->
+
+    actor_c_id = WebActors.spawn ->
+      WebActors.send_exit actor_b_id, "foobar"
+
+    waitsFor -> received.length >= 1
+
+    runs -> expect(received).toEqual([[actor_b_id, "foobar"]])
+
+  it "should kill actors receiving untrapped exit notifications", ->
+    received = []
+
+    actor_a_id = WebActors.spawn ->
+      WebActors.receive $$, (m) -> received.push m
+
+    actor_b_id = WebActors.spawn ->
+      WebActors.send_exit actor_a_id, "foobar"
+      WebActors.send actor_a_id, "baz"
+
+    setTimeout((-> received.push "watchdog"), 100)
+
+    waitsFor -> received.length >= 1
+
+    runs -> expect(received).toEqual(["watchdog"])
