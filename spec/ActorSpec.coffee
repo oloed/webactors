@@ -1,5 +1,6 @@
 describe "A WebActors Actor", ->
   $$ = WebActors.$$
+  $_ = WebActors.$_
 
   it "should have a unique ID", ->
     actor_id_a = WebActors.spawn ->
@@ -16,11 +17,34 @@ describe "A WebActors Actor", ->
 
   it "should receive messages", ->
     expected = "foobar"
-    received = null
+    received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive [$$, (m) -> received = m]
+      WebActors.receive $$, (m) -> received.push(m)
 
     WebActors.send actor_id, expected
 
-    waitsFor -> received is expected
+    waitsFor -> received.length >= 1
+
+    runs -> expect(received).toEqual([expected])
+
+  it "should treat multiple receives as alternatives", ->
+    received = []
+
+    actor_id = WebActors.spawn ->
+      WebActors.receive $$("foo"), (m) ->
+        received.push(m)
+        WebActors.receive $$("baz"), (m) ->
+          received.push(m)
+      WebActors.receive $$("bar"), (m) ->
+        received.push(m)
+        WebActors.receive $$("baz"), (m) ->
+          received.push(m)
+
+    WebActors.send actor_id, "bar"
+    WebActors.send actor_id, "foo"
+    WebActors.send actor_id, "baz"
+
+    waitsFor -> received.length >= 2
+
+    runs -> expect(received).toEqual(["bar", "baz"])

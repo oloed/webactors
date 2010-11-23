@@ -33,6 +33,10 @@ describe "WebActors.match", ->
     expect(WebActors.match(WebActors.capture(42), 38)).toEqual null
     expect(WebActors.match(WebActors.capture(42), 42)).toEqual [42]
 
+  it "should support restricted capture for strings", ->
+    expect(WebActors.match(WebActors.capture("foo"), "bar")).toEqual null
+    expect(WebActors.match(WebActors.capture("foo"), "foo")).toEqual ["foo"]
+
   it "should support destructuring capture", ->
     expect(WebActors.match([WebActors.capture, "b", WebActors.capture], ["a", "b", "c"])).toEqual ["a", "c"]
 
@@ -43,3 +47,7 @@ describe "WebActors.match", ->
 describe "WebActors.$$", ->
   it "should be an alias for WebActors.capture", ->
     expect(WebActors.$$).toEqual(WebActors.capture)
+
+describe "WebActors.$_", ->
+  it "should be an alias for WebActors.any", ->
+    expect(WebActors.$_).toEqual(WebActors.any)

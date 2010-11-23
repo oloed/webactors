@@ -46,3 +46,4 @@ match = (pattern, value, captured) ->
 @WebActors.$$ = capture
 
 @WebActors.any = any
+@WebActors.$_ = any
