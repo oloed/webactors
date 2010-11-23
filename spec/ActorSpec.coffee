@@ -48,3 +48,12 @@ describe "A WebActors Actor", ->
     waitsFor -> received.length >= 2
 
     runs -> expect(received).toEqual(["bar", "baz"])
+
+  it "should have shorthand for sending to self", ->
+    completed = false
+
+    WebActors.spawn ->
+      WebActors.send_self "foo"
+      WebActors.receive "foo", -> completed = true
+    
+    waitsFor -> completed

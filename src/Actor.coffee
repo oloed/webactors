@@ -18,6 +18,8 @@ wrap_actor_cont = (actor, cont, args) ->
     actor.clauses = null
     try
       cont.apply(this, args)
+    catch e
+      alert e + e.stack
     finally
       if actor.clauses
         actor.mailbox.consumeOnce (message) ->
@@ -57,3 +59,4 @@ get_self = ->
 @WebActors.send = send
 @WebActors.receive = receive
 @WebActors.get_self = get_self
+@WebActors.send_self = (message) -> send get_self(), message
