@@ -6,13 +6,15 @@ require 'rake/clean'
 require 'coffee_script'
 
 DIST_DIR = "dist"
-RELEASE_FILE = File.join(DIST_DIR, "webactors.js")
+COMBINED_JAVASCRIPT = File.join(DIST_DIR, "webactors.js")
+COMBINED_MINIFIED_JAVASCRIPT = COMBINED_JAVASCRIPT.sub(/\.js$/, '.min.js')
+RELEASE_FILES = [COMBINED_JAVASCRIPT, COMBINED_MINIFIED_JAVASCRIPT]
 
 JAVASCRIPTS = FileList['src/*.coffee'].map { |s| s.sub(/\.coffee$/, '.js') }
 JAVASCRIPT_SPECS = FileList['spec/*.coffee'].map { |s| s.sub(/\.coffee$/, '.js') }
 
 CLEAN << JAVASCRIPTS
-CLOBBER << RELEASE_FILE
+CLOBBER << RELEASE_FILES
 CLOBBER << JAVASCRIPT_SPECS
 
 rule '.js' => '.coffee' do |t|
@@ -24,13 +26,10 @@ rule '.js' => '.coffee' do |t|
   end
 end
 
-desc "Build files"
-task :build => [RELEASE_FILE] + JAVASCRIPT_SPECS
-
 directory DIST_DIR
 
-file RELEASE_FILE => [DIST_DIR] + JAVASCRIPTS do
-  open RELEASE_FILE, "w" do |output|
+file COMBINED_JAVASCRIPT => [DIST_DIR] + JAVASCRIPTS do
+  open COMBINED_JAVASCRIPT, "w" do |output|
     for script in JAVASCRIPTS
       open script, "r" do |input|
         output.write input.read
@@ -38,5 +37,13 @@ file RELEASE_FILE => [DIST_DIR] + JAVASCRIPTS do
     end
   end
 end
+
+file COMBINED_MINIFIED_JAVASCRIPT => COMBINED_JAVASCRIPT do
+  puts "minifying #{COMBINED_JAVASCRIPT}"
+  system "yui-compressor", "-o", COMBINED_MINIFIED_JAVASCRIPT, COMBINED_JAVASCRIPT
+end
+
+desc "Build files"
+task :build => RELEASE_FILES + JAVASCRIPT_SPECS
 
 task :default => :build
