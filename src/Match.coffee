@@ -11,7 +11,7 @@ class CapturingPattern
 capture = (body) ->
   new CapturingPattern(body)
 
-any = "oijwfeiojiowejfiowjfi"
+any = ->
 
 match = (pattern, value, captured) ->
   if typeof(pattern) is "object"
