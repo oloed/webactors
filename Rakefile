@@ -12,10 +12,11 @@ JAVASCRIPTS = FileList['src/*.coffee'].map { |s| s.sub(/\.coffee$/, '.js') }
 JAVASCRIPT_SPECS = FileList['spec/*.coffee'].map { |s| s.sub(/\.coffee$/, '.js') }
 
 CLEAN << JAVASCRIPTS
-CLEAN << JAVASCRIPT_SPECS
 CLOBBER << RELEASE_FILE
+CLOBBER << JAVASCRIPT_SPECS
 
 rule '.js' => '.coffee' do |t|
+  puts "building #{t.name}"
   File.open t.name, "w" do |output|
     File.open t.source, "r" do |input|
       output.write CoffeeScript.compile(input.read)
@@ -24,7 +25,7 @@ rule '.js' => '.coffee' do |t|
 end
 
 desc "Build files"
-task :build => RELEASE_FILE
+task :build => [RELEASE_FILE] + JAVASCRIPT_SPECS
 
 directory DIST_DIR
 
