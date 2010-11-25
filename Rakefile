@@ -38,9 +38,9 @@ file COMBINED_JAVASCRIPT => [DIST_DIR] + JAVASCRIPTS do
   end
 end
 
-file COMBINED_MINIFIED_JAVASCRIPT => COMBINED_JAVASCRIPT do
-  puts "minifying #{COMBINED_JAVASCRIPT}"
-  system "yui-compressor", "-o", COMBINED_MINIFIED_JAVASCRIPT, COMBINED_JAVASCRIPT
+rule /\.min\.js$/ => proc { |fn| fn.sub(/\.min\.js$/, '.js') } do |t|
+  puts "minifying #{t.source}"
+  system "yui-compressor", "-o", t.name, t.source
 end
 
 desc "Build files"
