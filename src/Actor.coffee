@@ -3,12 +3,16 @@
 class Actor
   constructor: (@actor_id) ->
     @mailbox = new WebActors.Mailbox()
+    @state = {}
     @clauses = null
     @exit_handler = null
     @linked = {}
 
   link: (actor_id) ->
     @linked[actor_id] = true
+
+  unlink: (actor_id) ->
+    delete @linked[actor_id]
 
   send: (message) ->
     @mailbox.postMessage(message)
@@ -44,7 +48,7 @@ wrap_actor_cont = (actor, cont, args) ->
     actor.clauses = null
     exit_reason = null
     try
-      cont.apply(this, args)
+      cont.apply(actor.state, args)
     catch e
       actor.clauses = null
       exit_reason = e
@@ -105,6 +109,12 @@ link = (actor_id) ->
   else
     throw "No such actor"
 
+unlink = (actor_id) ->
+  actor = actors_by_id[actor_id]
+  if actor
+    current_actor.unlink(actor_id)
+    actor.unlink(current_actor.actor_id)
+
 @WebActors.spawn = spawn
 @WebActors.send = send
 @WebActors.receive = receive
@@ -113,3 +123,4 @@ link = (actor_id) ->
 @WebActors.trap_exit = trap_exit
 @WebActors.send_exit = send_exit
 @WebActors.link = link
+@WebActors.unlink = unlink

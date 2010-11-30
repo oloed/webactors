@@ -187,3 +187,27 @@ describe "A WebActors Actor", ->
       WebActors.receive [actor_a_id, "foo"], -> passed = true
 
     waitsFor -> passed
+
+  it "should support unlinking actors", ->
+    passed = false
+
+    root_id = WebActors.spawn ->
+      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+
+      actor_a_id = WebActors.spawn ->
+        WebActors.link root_id
+        WebActors.receive "go", ->
+          WebActors.unlink actor_b_id
+          WebActors.send actor_b_id, "go"
+          WebActors.receive $$, ->
+
+      actor_b_id = WebActors.spawn ->
+        WebActors.link actor_a_id
+        WebActors.send actor_a_id, "go"
+        WebActors.receive "go", ->
+      
+      setTimeout((-> WebActors.send root_id, "watchdog"), 100)
+      WebActors.receive "watchdog", -> passed = true
+      WebActors.receive $$, ->
+
+    waitsFor -> passed
