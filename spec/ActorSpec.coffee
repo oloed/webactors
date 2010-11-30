@@ -211,3 +211,18 @@ describe "A WebActors Actor", ->
       WebActors.receive $$, ->
 
     waitsFor -> passed
+
+  it "should support spawning with automatic linking", ->
+    passed = false
+
+    root_id = WebActors.spawn ->
+      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+
+      actor_a_id = WebActors.spawn_linked ->
+        WebActors.send root_id, "go"
+      
+      WebActors.receive "go", ->
+        WebActors.receive [actor_a_id, null], -> passed = true
+      WebActors.receive $$, ->
+
+    waitsFor -> passed

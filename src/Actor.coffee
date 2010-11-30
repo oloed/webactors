@@ -71,6 +71,12 @@ spawn = (body) ->
   setTimeout(wrap_actor_cont(actor, body, []), 0)
   actor_id
 
+spawn_linked = (body) ->
+  parent_id = get_self()
+  spawn ->
+    link parent_id
+    body.apply(this, [])
+
 send = (actor_id, message) ->
   actor = actors_by_id[actor_id]
   if actor
@@ -116,6 +122,7 @@ unlink = (actor_id) ->
     actor.unlink(current_actor.actor_id)
 
 @WebActors.spawn = spawn
+@WebActors.spawn_linked = spawn_linked
 @WebActors.send = send
 @WebActors.receive = receive
 @WebActors.get_self = get_self
