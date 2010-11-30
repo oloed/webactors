@@ -72,10 +72,9 @@ spawn = (body) ->
   actor_id
 
 spawn_linked = (body) ->
-  parent_id = get_self()
-  spawn ->
-    link parent_id
-    body.apply(this, [])
+  actor_id = spawn body
+  link actor_id
+  actor_id
 
 send = (actor_id, message) ->
   actor = actors_by_id[actor_id]
