@@ -123,3 +123,67 @@ describe "A WebActors Actor", ->
     waitsFor -> received.length >= 1
 
     runs -> expect(received).toEqual(["watchdog"])
+
+  it "should kill actor on trap failure", ->
+    received = []
+
+    actor_a_id = WebActors.spawn ->
+      WebActors.trap_exit (exited, reason) -> [exited, reason]
+      WebActors.receive "go", ->
+        WebActors.send_exit actor_b_id, "testing"
+        WebActors.receive $$, (m) -> received.push m
+
+    actor_b_id = WebActors.spawn ->
+      WebActors.trap_exit (exited, reason) ->
+        throw "error"
+      WebActors.link actor_a_id
+      WebActors.send actor_a_id, "go"
+      WebActors.receive "never happen", ->
+
+    waitsFor -> received.length >= 1
+
+    runs -> expect(received).toEqual([[actor_b_id, "error"]])
+
+  it "should fail attempts to link with non-existent actors", ->
+    passed = false
+
+    root_id = WebActors.spawn ->
+      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+      actor_a_id = "bogus"
+      actor_b_id = WebActors.spawn ->
+        WebActors.link root_id
+        WebActors.receive $$, ->
+        WebActors.link actor_a_id
+      WebActors.receive [actor_b_id, $_], -> passed = true
+
+    waitsFor -> passed
+
+  it "should fail attempts to link with dead actors", ->
+    passed = false
+
+    root_id = WebActors.spawn ->
+      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+
+      actor_a_id = WebActors.spawn ->
+        WebActors.link root_id
+
+      WebActors.receive [actor_a_id, $_], ->
+        actor_b_id = WebActors.spawn ->
+          WebActors.link root_id
+          WebActors.receive $$, ->
+          WebActors.link actor_a_id
+        WebActors.receive [actor_b_id, $_], -> passed = true
+
+    waitsFor -> passed
+
+  it "should produce a fatal exception as exit reason", ->
+    passed = false
+
+    root_id = WebActors.spawn ->
+      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+      actor_a_id = WebActors.spawn ->
+        WebActors.link root_id
+        throw "foo"
+      WebActors.receive [actor_a_id, "foo"], -> passed = true
+
+    waitsFor -> passed

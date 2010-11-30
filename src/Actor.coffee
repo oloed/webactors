@@ -15,7 +15,11 @@ class Actor
 
   send_exit: (exited, exit_reason) ->
     if @exit_handler
-      message = @exit_handler(exited, exit_reason)
+      try
+        message = @exit_handler(exited, exit_reason)
+      catch e
+        shutdown_actor @actor_id, e
+        return
       send @actor_id, message
     else
       shutdown_actor @actor_id, exit_reason
@@ -42,7 +46,8 @@ wrap_actor_cont = (actor, cont, args) ->
     try
       cont.apply(this, args)
     catch e
-      alert(e + "\n" + e.stack)
+      actor.clauses = null
+      exit_reason = e
     finally
       if actor.clauses
         actor.mailbox.consumeOnce (message) ->
@@ -97,6 +102,8 @@ link = (actor_id) ->
   if actor
     current_actor.link(actor_id)
     actor.link(current_actor.actor_id)
+  else
+    throw "No such actor"
 
 @WebActors.spawn = spawn
 @WebActors.send = send
