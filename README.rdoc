@@ -6,24 +6,32 @@
 
 WebActors is a simple library for managing concurrency
 in JavaScript programs. It's based on Erlang's
-interpretation of the Actor Model.
+adaptation of the Actor Model.
+
+For an introduction to actors in general, and WebActors in
+particular, scroll down to the section entitled
+"Tutorial".
 
 = Building
 
 == Build Requirements
 
-WebActors doesn't have any special run-time requirements,
-but it does require ruby, rake, the coffee_script gem, and
-the YUI compressor to build from source.  (Eventually I'd
-like to move to a pure JavaScript build system.)
+WebActors doesn't have any special run-time requirements
+-- it's just a single JavaScript file -- but for now it
+does require ruby, rake, the coffee_script gem and the YUI
+compressor to build from source code.
 
 A suitable version of YUI Compressor is availabile from
 Ubuntu Universe as the <code>yui-compressor</code>
 package.
 
+(Eventually I'd like to move to a pure-JavaScript build
+system.)
+
 == Running Rake
 
-Running <code>rake</code> with no arguments will build everything.
+Running <code>rake</code> with no arguments will build
+everything.
 
 The output files are:
 
@@ -32,7 +40,7 @@ The output files are:
 
 The two should be functionally-equivalent.
 
-= API
+= API Reference
 
 WebActors defines a single object in the top-level
 namespace, unsurprisingly called WebActors.  It has a
@@ -149,3 +157,116 @@ otherwise.
 <code>$$</code> matches and captures any value; the match
 may be further constrained by passing an argument to
 <code>$$</code> as a function.
+
+= Tutorial
+
+== Actors Explained
+
+An "actor" is pretty much just a regular process or
+thread with a mailbox attached.  In programming styles
+based on the Actor Model, threads communicate with each
+other by posting immutable messages to each others'
+mailboxes, rather than by reading and writing fields of
+mutually-shared objects.
+
+Writing concurrent programs using message-passing can take
+some getting used to, but actors can make programs simpler,
+and they are also relatively safe from many common
+programming errors.
+
+== Actors in JavaScript
+
+JavaScript has neither processes nor threads (nor
+coroutines), but in the absence of these, actors can still
+be modeled by a chain of callbacks.  Indeed, actor-based
+programming can be a good way to manage the inherent
+complexities of callback-driven programming.
+
+=== Creating Actors and Sending Messages
+
+The <code>WebActors.spawn</code> function is used to
+create a new actor.  This function takes a callback to run
+in the new actor's context, and returns an id representing
+the newly created actor.  This id can be used to submit
+messages to the new actor's mailbox.
+
+ var actor = WebActors.spawn(a_callback); // create an actor
+ WebActors.send(actor, "a message"); // send it a message
+
+=== Receiving Messages
+
+To receive messages, use the <code>WebActors.receive</code>
+function.  It takes a pattern and a callback to be invoked
+when a matching message is received.
+
+ function a_callback() {
+   // $$ matches anything
+   WebActors.receive(WebActors.$$, function (message) {
+     alert(message);
+   });
+ }
+
+If an actor callback sets up a new callback via receive,
+then the actor will continue with the new callback once
+a matching message becomes available.  Otherwise, if a
+callback "breaks the chain", then the actor will terminate
+as soon as the callback finishes.
+
+In the above example, the actor sets up a callback to
+receive one message. That callback, in turn, doesn't set
+up any further callbacks, so the actor terminates at
+that point.
+
+=== Saving Some Typing
+
+If you aren't already in the habit of doing so, it can
+be useful (and occasionally more readable) to define local
+aliases for functions defined on library objects.
+
+ (function () {
+ var spawn = WebActors.spawn;
+ var receive = WebActors.receive;
+ var send = WebActors.send;
+ var $$ = WebActors.$$;
+
+ function a_callback() {
+   // $$ matches anything
+   WebActors.receive($$, function (message) {
+     alert(message);
+   });
+ }
+
+ actor = spawn(a_callback); // create an actor
+ send(actor, "a message"); // send it a message
+ 
+ })();
+
+(Be careful with this -- sometimes code may be easier to
+read if you spell things out.)
+
+Subsequent code samples will assume that such aliases have
+already been defined.
+
+=== Multiple Receives
+
+An actor can also choose between alternatives based on
+the specific message received.
+
+ receive("go left", function () {
+   alert("You fall off a cliff.");
+ });
+ receive("go right", function () {
+   alert("You fall into a pit.");
+ });
+
+In this case, if the actor receives "go left", it will
+print the message about falling off a cliff.  If the actor
+receives "go right", it will print the message about
+falling into a pit.
+
+Note that if both messages are available simultaneously
+(perhaps because they were already waiting in the
+mailbox), only one alternative (the first that matches)
+will be chosen.
+
+=== Receive Loops
