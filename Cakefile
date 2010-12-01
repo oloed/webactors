@@ -21,3 +21,8 @@ task "build", "Build files.", ->
 
     fs.writeFile "dist/webactors.js", src, ->
       fs.writeFile "dist/webactors.min.js", jsmin(src)
+
+task "clean", "Clean up.", ->
+  files = jsfiles("dist").concat(jsfiles "src").concat jsfiles("spec")
+  fs.unlinkSync f for f in files
+  fs.rmdirSync "dist"
