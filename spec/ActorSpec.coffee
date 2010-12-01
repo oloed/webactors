@@ -11,7 +11,7 @@ describe "A WebActors Actor", ->
     got_id = null
 
     actor_id = WebActors.spawn ->
-      got_id = WebActors.get_self()
+      got_id = WebActors.self()
       
     waitsFor -> got_id is actor_id
 

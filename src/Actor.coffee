@@ -101,7 +101,7 @@ receive = (pattern, cont) ->
   else
     actor.clauses.push clause
 
-get_self = ->
+self = ->
   current_actor.actor_id
 
 send_self = (message) ->
@@ -133,7 +133,7 @@ unlink = (actor_id) ->
     actor.unlink(current_actor.actor_id)
 
 sendback = (curried_args...) ->
-  actor_id = get_self()
+  actor_id = self()
   (callback_args...) ->
     send actor_id, curried_args.concat(callback_args)
 
@@ -141,7 +141,7 @@ sendback = (curried_args...) ->
 @WebActors.spawn_linked = spawn_linked
 @WebActors.send = send
 @WebActors.receive = receive
-@WebActors.get_self = get_self
+@WebActors.self = self
 @WebActors.send_self = send_self
 @WebActors.trap_exit = trap_exit
 @WebActors.send_exit = send_exit
