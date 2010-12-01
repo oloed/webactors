@@ -150,7 +150,7 @@ otherwise.
 may be further constrained by passing an argument to
 `$$` as a function.
 
-= Tutorial
+# Tutorial
 
 ## Actors Explained
 
