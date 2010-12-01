@@ -42,16 +42,23 @@ number of properties and methods attached to it.
 
 === WebActors.spawn(body) -> actor_id
 
-The <code>spawn</code> method spawns a new actor, returning its id.
+The <code>spawn</code> method spawns a new actor, returning
+its id.
 
-The actor will termiate after <code>body</code> returns, unless
-<code>body</code> suspends the actor by calling <code>receive</code>.
+The actor will termiate after <code>body</code> returns,
+unless <code>body</code> suspends the actor by calling
+<code>receive</code>.
 
 === WebActors.spawn_linked(body) -> actor_id
 
-The <code>spawn_linked</code> method is similar to <code>spawn</code>, except
-that it atomically links the spawned actor with the
-current actor.
+The <code>spawn_linked</code> method is similar to
+<code>spawn</code>, except that it atomically links the
+spawned actor with the current actor.
+
+=== WebActors.self()
+
+The <code>self</code> method returns the id of the current
+actor.
 
 === WebActors.send(actor_id, message)
 
@@ -59,13 +66,18 @@ Sends a message to another actor asynchronously. The
 message is put in the receiving actor's mailbox, to
 be retrieved with <code>receive</code>.
 
+=== WebActors.send_self(message)
+
+Like <code>send</code>, but sends a message to the current
+actor's mailbox.
+
 === WebActors.receive(pattern, cont)
 
 Sets up a one-shot handler to be called if a message
 matching the given pattern arrives.  The pattern will
 be structurally matched against candidate messages
-using <code>match</code>; a list of captured subvalues will be
-passed to the supplied continuation callback.
+using <code>match</code>; a list of captured subvalues will
+be passed to the supplied continuation callback.
 
 The set of outstanding receives for an actor is
 cleared each time the actor successfully receives
@@ -75,34 +87,29 @@ If an actor doesn't establish any receives before
 returning to the event loop, or if it raises an
 uncaught exception, the actor will terminate.
 
-=== WebActors.get_self()
-
-The <code>get_self</code> method returns the id of the current
-actor.
-
 === WebActors.link(actor_id)
 
-The <code>link</code> method links the current actor with the given
-actor, provided there wasn't already an existing link
-between them.
+The <code>link</code> method links the current actor with
+the given actor, provided there wasn't already an existing
+link between them.
 
-<code>link</code> will raise an error if the named actor is dead or
-doesn't exist.
+<code>link</code> will raise an error if the named actor is
+dead or doesn't exist.
 
 === WebActors.unlink(actor_id)
 
-The <code>unlink</code> method unlinks the current actor from the
-given actor, if there was an existing link between the
-two.
+The <code>unlink</code> method unlinks the current actor
+from the given actor, if there was an existing link between
+the two.
 
-<code>unlink</code> _won't_ raise an error if no actor with the given
-id exists.
+<code>unlink</code> _won't_ raise an error if no actor with
+the given id exists.
 
 === WebActors.trap_exit(fn)
 
 Normally, when an actor receives an exit notification,
-it will immediately exit.  <code>trap_exit</code> allows for more
-nuanced behavior than the default, converting the
+it will immediately exit.  <code>trap_exit</code> allows
+for more nuanced behavior than the default, converting the
 notification to a regular message.
 
 This passed-in function receives two arguments: the id of
@@ -114,6 +121,15 @@ the receiving actor.
 
 The <code>send_exit</code> method sends an exit notification to the
 given actor whether or not it is linked.
+
+=== WebActors.sendback(args...) -> cb
+
+Constructs a callback that sends a message to the actor
+that constructed it.  Useful for waiting with setTimeout.
+
+The message sent will consist of the arguments to
+<code>sendback</code> concatented with any arguments passed
+to the callback when it is called.
 
 == Pattern Matching
 
