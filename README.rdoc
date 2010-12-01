@@ -23,7 +23,7 @@ package.
 
 == Running Rake
 
-Running @rake@ with no arguments will build everything.
+Running <code>rake</code> with no arguments will build everything.
 
 The output files are:
 
@@ -42,14 +42,14 @@ number of properties and methods attached to it.
 
 === WebActors.spawn(body) -> actor_id
 
-The @spawn@ method spawns a new actor, returning its id.
+The <code>spawn</code> method spawns a new actor, returning its id.
 
-The actor will termiate after @body@ returns, unless
-@body@ suspends the actor by calling @receive@.
+The actor will termiate after <code>body</code> returns, unless
+<code>body</code> suspends the actor by calling <code>receive</code>.
 
 === WebActors.spawn_linked(body) -> actor_id
 
-The @spawn_linked@ method is similar to @spawn@, except
+The <code>spawn_linked</code> method is similar to <code>spawn</code>, except
 that it atomically links the spawned actor with the
 current actor.
 
@@ -57,14 +57,14 @@ current actor.
 
 Sends a message to another actor asynchronously. The
 message is put in the receiving actor's mailbox, to
-be retrieved with @receive@.
+be retrieved with <code>receive</code>.
 
 === WebActors.receive(pattern, cont)
 
 Sets up a one-shot handler to be called if a message
 matching the given pattern arrives.  The pattern will
 be structurally matched against candidate messages
-using @match@; a list of captured subvalues will be
+using <code>match</code>; a list of captured subvalues will be
 passed to the supplied continuation callback.
 
 The set of outstanding receives for an actor is
@@ -77,31 +77,31 @@ uncaught exception, the actor will terminate.
 
 === WebActors.get_self()
 
-The @get_self@ method returns the id of the current
+The <code>get_self</code> method returns the id of the current
 actor.
 
 === WebActors.link(actor_id)
 
-The @link@ method links the current actor with the given
+The <code>link</code> method links the current actor with the given
 actor, provided there wasn't already an existing link
 between them.
 
-@link@ will raise an error if the named actor is dead or
+<code>link</code> will raise an error if the named actor is dead or
 doesn't exist.
 
 === WebActors.unlink(actor_id)
 
-The @unlink@ method unlinks the current actor from the
+The <code>unlink</code> method unlinks the current actor from the
 given actor, if there was an existing link between the
 two.
 
-@unlink@ _won't_ raise an error if no actor with the given
+<code>unlink</code> _won't_ raise an error if no actor with the given
 id exists.
 
 === WebActors.trap_exit(fn)
 
 Normally, when an actor receives an exit notification,
-it will immediately exit.  @trap_exit@ allows for more
+it will immediately exit.  <code>trap_exit</code> allows for more
 nuanced behavior than the default, converting the
 notification to a regular message.
 
@@ -112,14 +112,14 @@ the receiving actor.
 
 === WebActors.send_exit(actor_id, exit_reason)
 
-The @send_exit@ method sends an exit notification to the
+The <code>send_exit</code> method sends an exit notification to the
 given actor whether or not it is linked.
 
 == Pattern Matching
 
 === WebActors.match(pattern, value) -> result
 
-@match@ performs structural matching on JavaScript values.
+<code>match</code> performs structural matching on JavaScript values.
 It takes a pattern and a value, returning an array of
 captured subvalues if the match is successful, or null
 otherwise.
