@@ -1,0 +1,135 @@
+  _   _     _   ___      _
+ |*|_|*|___|*|_|*  |___ |*|_ ___ ___ ___
+ | | | |*_ |   | | |* _|   _|*  |* _|*__|
+ | | | | __| | |   | |_ | |_| | | | |__ |
+ |_____|___|___|_|_|___||___|___|_| |___|
+
+WebActors is a simple library for managing concurrency
+in JavaScript programs. It's based on Erlang's
+interpretation of the Actor Model.
+
+= Building
+
+== Build Requirements
+
+WebActors doesn't have any special run-time requirements,
+but it does require ruby, rake, the coffee_script gem, and
+the YUI compressor to build from source.  (Eventually I'd
+like to move to a pure JavaScript build system.)
+
+A suitable version of YUI Compressor is availabile from
+Ubuntu Universe as the <code>yui-compressor</code>
+package.
+
+== Running Rake
+
+Running @rake@ with no arguments will build everything.
+
+The output files are:
+
+ - dist/webactors.js - uncompressed version
+ - dist/webactors.min.js - minfied version
+
+The two should be functionally-equivalent.
+
+= API
+
+WebActors defines a single object in the top-level
+namespace, unsurprisingly called WebActors.  It has a
+number of properties and methods attached to it.
+
+== Actors
+
+=== WebActors.spawn(body) -> actor_id
+
+The @spawn@ method spawns a new actor, returning its id.
+
+The actor will termiate after @body@ returns, unless
+@body@ suspends the actor by calling @receive@.
+
+=== WebActors.spawn_linked(body) -> actor_id
+
+The @spawn_linked@ method is similar to @spawn@, except
+that it atomically links the spawned actor with the
+current actor.
+
+=== WebActors.send(actor_id, message)
+
+Sends a message to another actor asynchronously. The
+message is put in the receiving actor's mailbox, to
+be retrieved with @receive@.
+
+=== WebActors.receive(pattern, cont)
+
+Sets up a one-shot handler to be called if a message
+matching the given pattern arrives.  The pattern will
+be structurally matched against candidate messages
+using @match@; a list of captured subvalues will be
+passed to the supplied continuation callback.
+
+The set of outstanding receives for an actor is
+cleared each time the actor successfully receives
+a message.
+
+If an actor doesn't establish any receives before
+returning to the event loop, or if it raises an
+uncaught exception, the actor will terminate.
+
+=== WebActors.get_self()
+
+The @get_self@ method returns the id of the current
+actor.
+
+=== WebActors.link(actor_id)
+
+The @link@ method links the current actor with the given
+actor, provided there wasn't already an existing link
+between them.
+
+@link@ will raise an error if the named actor is dead or
+doesn't exist.
+
+=== WebActors.unlink(actor_id)
+
+The @unlink@ method unlinks the current actor from the
+given actor, if there was an existing link between the
+two.
+
+@unlink@ _won't_ raise an error if no actor with the given
+id exists.
+
+=== WebActors.trap_exit(fn)
+
+Normally, when an actor receives an exit notification,
+it will immediately exit.  @trap_exit@ allows for more
+nuanced behavior than the default, converting the
+notification to a regular message.
+
+This passed-in function receives two arguments: the id of
+the originating (not the receiving!) actor, and the reason
+to exit.  It should return a message to be delivered to
+the receiving actor.
+
+=== WebActors.send_exit(actor_id, exit_reason)
+
+The @send_exit@ method sends an exit notification to the
+given actor whether or not it is linked.
+
+== Pattern Matching
+
+=== WebActors.match(pattern, value) -> result
+
+@match@ performs structural matching on JavaScript values.
+It takes a pattern and a value, returning an array of
+captured subvalues if the match is successful, or null
+otherwise.
+
+=== WebActors.any or WebActors.$_
+
+<code>$_</code> matches any value without capturing it.
+
+=== WebActors.capture or WebActors.$$
+
+<code>$$</code> matches and captures any value; the match
+may be further constrained by passing an argument to
+<code>$$</code> as a function.
