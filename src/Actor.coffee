@@ -1,5 +1,21 @@
 @WebActors ?= {}
 
+current_actor = null
+next_actor_id = 0
+actors_by_id = {}
+
+alloc_actor_id = ->
+  next_actor_id++
+
+lookup_actor = (actor_id) ->
+  actors_by_id[actor_id]
+
+register_actor = (actor_id, actor) ->
+  actors_by_id[actor_id] = actor
+
+unregister_actor = (actor_id) ->
+  delete actors_by_id[actor_id]
+
 class Actor
   constructor: (@actor_id) ->
     @mailbox = new WebActors.Mailbox()
@@ -27,32 +43,29 @@ class Actor
       send @actor_id, message
     else
       shutdown_actor @actor_id, exit_reason
+
+  notify_linked: (exit_reason) ->
+    for actor_id of @linked
+      propagate_exit actor_id, @actor_id, exit_reason
   
-current_actor = null
-next_actor_id = 0
-actors_by_id = {}
-
-alloc_actor_id = ->
-  next_actor_id++
-
 shutdown_actor = (actor_id, exit_reason) ->
-  actor = actors_by_id[actor_id]
+  actor = lookup_actor(actor_id)
   if actor
-    delete actors_by_id[actor.actor_id]
-    for actor_id of actor.linked
-      propagate_exit actor_id, actor.actor_id, exit_reason
+    unregister_actor(actor.actor_id)
+    actor.notify_linked(exit_reason)
 
 wrap_actor_cont = (actor, cont, args) ->
   -> 
-    current_actor = actor
     actor.clauses = null
     exit_reason = null
+    current_actor = actor
     try
       cont.apply(actor.state, args)
     catch e
       actor.clauses = null
       exit_reason = e
     finally
+      current_actor = null
       if actor.clauses
         actor.mailbox.consumeOnce (message) ->
          for [pattern, cont] in actor.clauses
@@ -62,12 +75,11 @@ wrap_actor_cont = (actor, cont, args) ->
           return null
       else
         shutdown_actor actor.actor_id, exit_reason
-      current_actor = null
 
 spawn = (body) ->
   actor_id = alloc_actor_id()
   actor = new Actor(actor_id)
-  actors_by_id[actor_id] = actor
+  register_actor(actor_id, actor)
   setTimeout(wrap_actor_cont(actor, body, []), 0)
   actor_id
 
@@ -77,7 +89,7 @@ spawn_linked = (body) ->
   actor_id
 
 send = (actor_id, message) ->
-  actor = actors_by_id[actor_id]
+  actor = lookup_actor(actor_id)
   if actor
     actor.send(message)
 
@@ -99,7 +111,7 @@ trap_exit = (handler) ->
   current_actor.exit_handler = handler
 
 propagate_exit = (actor_id, exiting, exit_reason) ->
-  actor = actors_by_id[actor_id]
+  actor = lookup_actor(actor_id)
   if actor
     actor.send_exit(exiting, exit_reason)
 
@@ -107,7 +119,7 @@ send_exit = (actor_id, exit_reason) ->
   propagate_exit actor_id, current_actor.actor_id, exit_reason
 
 link = (actor_id) ->
-  actor = actors_by_id[actor_id]
+  actor = lookup_actor(actor_id)
   if actor
     current_actor.link(actor_id)
     actor.link(current_actor.actor_id)
@@ -115,10 +127,15 @@ link = (actor_id) ->
     throw "No such actor"
 
 unlink = (actor_id) ->
-  actor = actors_by_id[actor_id]
+  actor = lookup_actor(actor_id)
   if actor
     current_actor.unlink(actor_id)
     actor.unlink(current_actor.actor_id)
+
+sendback = (curried_args...) ->
+  actor_id = get_self()
+  (callback_args...) ->
+    send actor_id, curried_args.concat(callback_args)
 
 @WebActors.spawn = spawn
 @WebActors.spawn_linked = spawn_linked
@@ -130,3 +147,4 @@ unlink = (actor_id) ->
 @WebActors.send_exit = send_exit
 @WebActors.link = link
 @WebActors.unlink = unlink
+@WebActors.sendback = sendback

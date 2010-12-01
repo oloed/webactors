@@ -226,3 +226,16 @@ describe "A WebActors Actor", ->
       WebActors.receive $$, ->
 
     waitsFor -> passed
+
+  it "should support send-callbacks which accumulate arguments", ->
+    passed = false
+
+    WebActors.spawn ->
+      cb = WebActors.sendback("foo")
+      WebActors.send_self "bar"
+      WebActors.receive "bar", ->
+        cb("baz", 1, 2)
+        WebActors.receive ["foo", "baz", 1, 2], -> passed = true
+      WebActors.receive $_, ->
+
+    waitsFor -> passed
