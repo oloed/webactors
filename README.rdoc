@@ -16,22 +16,14 @@ particular, scroll down to the section entitled
 
 == Build Requirements
 
-WebActors doesn't have any special run-time requirements
--- it's just a single JavaScript file -- but for now it
-does require ruby, rake, the coffee_script gem and the YUI
-compressor to build from source code.
+WebActors doesn't have any special run-time requirements -- it's just
+a single JavaScript file -- but it requires node.js, npm, and the
+"coffee-script" and "jsmin" npm packages for development.
 
-A suitable version of YUI Compressor is availabile from
-Ubuntu Universe as the <code>yui-compressor</code>
-package.
+== Running Cake
 
-(Eventually I'd like to move to a pure-JavaScript build
-system.)
-
-== Running Rake
-
-Running <code>rake</code> with no arguments will build
-everything.
+Running <code>cake build</code> with no arguments will build
+everything. 
 
 The output files are:
 
