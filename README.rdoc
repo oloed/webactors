@@ -38,7 +38,7 @@ The output files are:
 * dist/webactors.js - uncompressed version
 * dist/webactors.min.js - minfied version
 
-The two should be functionally-equivalent.
+The two should be functionally equivalent.
 
 = API Reference
 
