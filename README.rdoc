@@ -132,7 +132,7 @@ whether or not it is linked with the current actor.
 
 <code>kill</code> may be called outside an actor.
 
-=== WebActors.trap_kill(fn)
+=== WebActors.trap_kill(function (killer_id, reason) {...})
 
 Normally, when an actor receives a kill, it will immediately
 exit.  <code>trap_kill</code> allows for more nuanced behavior
