@@ -113,22 +113,21 @@ the two.
 <code>unlink</code> _won't_ raise an error if no actor with
 the given id exists.
 
-=== WebActors.trap_exit(fn)
+=== WebActors.kill(recipient_id, reason)
 
-Normally, when an actor receives an exit notification,
-it will immediately exit.  <code>trap_exit</code> allows
-for more nuanced behavior than the default, converting the
-notification to a regular message.
+The <code>kill</code> method sends a kill to the given actor
+whether or not it is linked with the current actor.
+
+=== WebActors.trap_kill(fn)
+
+Normally, when an actor receives a kill, it will immediately
+exit.  <code>trap_kill</code> allows for more nuanced behavior
+than the default, converting the kill into a regular message.
 
 This passed-in function receives two arguments: the id of
 the originating (not the receiving!) actor, and the reason
-to exit.  It should return a message to be delivered to
+for the kill.  It should return a message to be delivered to
 the receiving actor.
-
-=== WebActors.send_exit(actor_id, exit_reason)
-
-The <code>send_exit</code> method sends an exit notification to the
-given actor whether or not it is linked.
 
 === WebActors.sendback(args...) -> cb
 
