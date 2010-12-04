@@ -202,8 +202,8 @@ in the new actor's context, and returns an id representing
 the newly created actor.  This id can be used to submit
 messages to the new actor's mailbox.
 
- var actor = WebActors.spawn(a_callback); // create an actor
- WebActors.send(actor, "a message"); // send it a message
+    var actor = WebActors.spawn(a_callback); // create an actor
+    WebActors.send(actor, "a message"); // send it a message
 
 ### Receiving Messages
 
