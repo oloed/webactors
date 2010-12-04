@@ -33,10 +33,10 @@ class Actor
   send: (message) ->
     @mailbox.postMessage(message)
 
-  kill: (killed, reason) ->
+  kill: (killer, reason) ->
     if @kill_handler
       try
-        message = @kill_handler(killed, reason)
+        message = @kill_handler(killer, reason)
       catch e
         shutdown_actor @actor_id, e
         return
