@@ -35,8 +35,8 @@ everything.
 
 The output files are:
 
- - dist/webactors.js - uncompressed version
- - dist/webactors.min.js - minfied version
+* dist/webactors.js - uncompressed version
+* dist/webactors.min.js - minfied version
 
 The two should be functionally-equivalent.
 
@@ -48,6 +48,14 @@ number of properties and methods attached to it.
 
 == Actors
 
+Most of these functions must be called from within the
+context of an actor; the individual exceptions to this
+rule are:
+
+* WebActors.spawn
+* WebActors.send
+* WebActors.kill
+
 === WebActors.spawn(body) -> actor_id
 
 The <code>spawn</code> method spawns a new actor, returning
@@ -56,6 +64,8 @@ its id.
 The actor will termiate after <code>body</code> returns,
 unless <code>body</code> suspends the actor by calling
 <code>receive</code>.
+
+<code>spawn</code> may be called outside an actor.
 
 === WebActors.spawn_linked(body) -> actor_id
 
@@ -73,6 +83,8 @@ actor.
 Sends a message to another actor asynchronously. The
 message is put in the receiving actor's mailbox, to
 be retrieved with <code>receive</code>.
+
+<code>send</code> may be called outside an actor.
 
 === WebActors.send_self(message)
 
@@ -117,6 +129,8 @@ the given id exists.
 
 The <code>kill</code> method sends a kill to the given actor
 whether or not it is linked with the current actor.
+
+<code>kill</code> may be called outside an actor.
 
 === WebActors.trap_kill(fn)
 

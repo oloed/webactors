@@ -148,7 +148,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill (actor_id, reason) -> [actor_id, reason]
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
       actor_a_id = "bogus"
       actor_b_id = WebActors.spawn ->
         WebActors.link root_id
@@ -162,7 +162,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill (actor_id, reason) -> [actor_id, reason]
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
 
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
@@ -180,7 +180,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill (actor_id, reason) -> [actor_id, reason]
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
         throw "foo"
@@ -192,7 +192,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill (actor_id, reason) -> [actor_id, reason]
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
 
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
@@ -216,7 +216,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill (actor_id, reason) -> [actor_id, reason]
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
 
       actor_a_id = WebActors.spawn_linked ->
         WebActors.send root_id, "go"
@@ -244,10 +244,10 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill (actor_id, reason) -> [actor_id, reason]
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
 
       actor_a_id = WebActors.spawn_linked ->
-        WebActors.trap_kill (actor_id, reason) ->
+        WebActors.trap_kill (killer_id, reason) ->
           throw "foobar"
 
         WebActors.send root_id, "go"
@@ -258,5 +258,21 @@ describe "A WebActors Actor", ->
         WebActors.kill actor_a_id, "hoge"
         WebActors.receive [actor_a_id, "foobar"], ->
           passed = true
+
+    waitsFor -> passed
+
+  it "should support kill from outside", ->
+    ready = false
+    passed = false
+
+    root_id = WebActors.spawn ->
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
+      ready = true
+      WebActors.receive [null, "foobar"], ->
+        passed = true
+
+    waitsFor -> ready
+
+    runs -> WebActors.kill root_id, "foobar"
 
     waitsFor -> passed

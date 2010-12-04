@@ -110,13 +110,17 @@ send_self = (message) ->
 trap_kill = (handler) ->
   current_actor.kill_handler = handler
 
-propagate_kill = (actor_id, killing, reason) ->
+propagate_kill = (actor_id, killer, reason) ->
   actor = lookup_actor(actor_id)
   if actor
-    actor.kill(killing, reason)
+    actor.kill(killer, reason)
 
 kill = (actor_id, reason) ->
-  propagate_kill actor_id, current_actor.actor_id, reason
+  if current_actor
+    recipient_id = current_actor.actor_id
+  else
+    recipient_id = null
+  propagate_kill actor_id, recipient_id, reason
 
 link = (actor_id) ->
   actor = lookup_actor(actor_id)
