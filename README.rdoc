@@ -1,4 +1,4 @@
-  _   _     _   ___      _
+  _    _     _   ___      _
  |*|_|*|___|*|_|*  |___ |*|_ ___ ___ ___
  | | | |*_ |   | | |* _|   _|*  |* _|*__|
  | | | | __| | |   | |_ | |_| | | | |__ |
@@ -241,32 +241,26 @@ aliases for functions defined on library objects.
  
  })();
 
-(Be careful with this -- sometimes code may be easier to
-read if you spell things out.)
-
 Subsequent code samples will assume that such aliases have
 already been defined.
 
 === Multiple Receives
 
 An actor can also choose between alternatives based on
-the specific message received.
+the specific message received. (This is a fragment,
+rather than a complete example.)
 
  receive("go left", function () {
    alert("You fall off a cliff.");
  });
  receive("go right", function () {
-   alert("You fall into a pit.");
+   alert("You stumble into a pit full of spikes.");
  });
 
 In this case, if the actor receives "go left", it will
-print the message about falling off a cliff.  If the actor
+print the message about falling off a cliff.  If it
 receives "go right", it will print the message about
 falling into a pit.
 
-Note that if both messages are available simultaneously
-(perhaps because they were already waiting in the
-mailbox), only one alternative (the first that matches)
-will be chosen.
-
-=== Receive Loops
+In both cases the actor terminates after printing its
+message, since neither callback sets up any new receives.
