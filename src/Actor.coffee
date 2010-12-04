@@ -21,7 +21,7 @@ class Actor
     @mailbox = new WebActors.Mailbox()
     @state = {}
     @clauses = null
-    @exit_handler = null
+    @kill_handler = null
     @linked = {}
 
   link: (actor_id) ->
@@ -33,37 +33,37 @@ class Actor
   send: (message) ->
     @mailbox.postMessage(message)
 
-  send_exit: (exited, exit_reason) ->
-    if @exit_handler
+  kill: (killed, reason) ->
+    if @kill_handler
       try
-        message = @exit_handler(exited, exit_reason)
+        message = @kill_handler(killed, reason)
       catch e
         shutdown_actor @actor_id, e
         return
       send @actor_id, message
     else
-      shutdown_actor @actor_id, exit_reason
+      shutdown_actor @actor_id, reason
 
-  notify_linked: (exit_reason) ->
+  notify_linked: (reason) ->
     for actor_id of @linked
-      propagate_exit actor_id, @actor_id, exit_reason
+      propagate_kill actor_id, @actor_id, reason
   
-shutdown_actor = (actor_id, exit_reason) ->
+shutdown_actor = (actor_id, reason) ->
   actor = lookup_actor(actor_id)
   if actor
     unregister_actor(actor.actor_id)
-    actor.notify_linked(exit_reason)
+    actor.notify_linked(reason)
 
 wrap_actor_cont = (actor, cont, args) ->
   -> 
     actor.clauses = null
-    exit_reason = null
+    reason = null
     current_actor = actor
     try
       cont.apply(actor.state, args)
     catch e
       actor.clauses = null
-      exit_reason = e
+      reason = e
     finally
       current_actor = null
       if actor.clauses
@@ -74,7 +74,7 @@ wrap_actor_cont = (actor, cont, args) ->
               return wrap_actor_cont(actor, cont, captured)
           return null
       else
-        shutdown_actor actor.actor_id, exit_reason
+        shutdown_actor actor.actor_id, reason
 
 spawn = (body) ->
   actor_id = alloc_actor_id()
@@ -107,16 +107,16 @@ self = ->
 send_self = (message) ->
   send current_actor.actor_id, message
 
-trap_exit = (handler) ->
-  current_actor.exit_handler = handler
+trap_kill = (handler) ->
+  current_actor.kill_handler = handler
 
-propagate_exit = (actor_id, exiting, exit_reason) ->
+propagate_kill = (actor_id, killing, reason) ->
   actor = lookup_actor(actor_id)
   if actor
-    actor.send_exit(exiting, exit_reason)
+    actor.kill(killing, reason)
 
-send_exit = (actor_id, exit_reason) ->
-  propagate_exit actor_id, current_actor.actor_id, exit_reason
+kill = (actor_id, reason) ->
+  propagate_kill actor_id, current_actor.actor_id, reason
 
 link = (actor_id) ->
   actor = lookup_actor(actor_id)
@@ -143,8 +143,8 @@ sendback = (curried_args...) ->
 @WebActors.receive = receive
 @WebActors.self = self
 @WebActors.send_self = send_self
-@WebActors.trap_exit = trap_exit
-@WebActors.send_exit = send_exit
+@WebActors.trap_kill = trap_kill
+@WebActors.kill = kill
 @WebActors.link = link
 @WebActors.unlink = unlink
 @WebActors.sendback = sendback

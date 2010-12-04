@@ -62,13 +62,13 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_exit (exited, reason) -> [exited, reason]
+      WebActors.trap_kill (exited, reason) -> [exited, reason]
 
       WebActors.receive $$, (m) ->
         received.push m
 
     actor_b_id = WebActors.spawn ->
-      WebActors.send_exit actor_a_id, "foobar"
+      WebActors.kill actor_a_id, "foobar"
 
     waitsFor -> received.length >= 1
 
@@ -78,7 +78,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_exit (exited, reason) -> [exited, reason]
+      WebActors.trap_kill (exited, reason) -> [exited, reason]
 
       WebActors.receive $$, (m) ->
         received.push m
@@ -94,7 +94,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_exit (exited, reason) -> [exited, reason]
+      WebActors.trap_kill (exited, reason) -> [exited, reason]
       WebActors.receive $$, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
@@ -102,7 +102,7 @@ describe "A WebActors Actor", ->
       WebActors.receive $_, ->
 
     actor_c_id = WebActors.spawn ->
-      WebActors.send_exit actor_b_id, "foobar"
+      WebActors.kill actor_b_id, "foobar"
 
     waitsFor -> received.length >= 1
 
@@ -115,7 +115,7 @@ describe "A WebActors Actor", ->
       WebActors.receive $$, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
-      WebActors.send_exit actor_a_id, "foobar"
+      WebActors.kill actor_a_id, "foobar"
       WebActors.send actor_a_id, "baz"
 
     setTimeout((-> received.push "watchdog"), 100)
@@ -128,13 +128,13 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_exit (exited, reason) -> [exited, reason]
+      WebActors.trap_kill (exited, reason) -> [exited, reason]
       WebActors.receive "go", ->
-        WebActors.send_exit actor_b_id, "testing"
+        WebActors.kill actor_b_id, "testing"
         WebActors.receive $$, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
-      WebActors.trap_exit (exited, reason) ->
+      WebActors.trap_kill (exited, reason) ->
         throw "error"
       WebActors.link actor_a_id
       WebActors.send actor_a_id, "go"
@@ -148,7 +148,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+      WebActors.trap_kill (actor_id, exit_reason) -> [actor_id, exit_reason]
       actor_a_id = "bogus"
       actor_b_id = WebActors.spawn ->
         WebActors.link root_id
@@ -162,7 +162,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+      WebActors.trap_kill (actor_id, exit_reason) -> [actor_id, exit_reason]
 
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
@@ -180,7 +180,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+      WebActors.trap_kill (actor_id, exit_reason) -> [actor_id, exit_reason]
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
         throw "foo"
@@ -192,7 +192,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+      WebActors.trap_kill (actor_id, exit_reason) -> [actor_id, exit_reason]
 
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
@@ -216,7 +216,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_exit (actor_id, exit_reason) -> [actor_id, exit_reason]
+      WebActors.trap_kill (actor_id, exit_reason) -> [actor_id, exit_reason]
 
       actor_a_id = WebActors.spawn_linked ->
         WebActors.send root_id, "go"
