@@ -48,13 +48,13 @@ number of properties and methods attached to it.
 
 == Actors
 
-Most of these functions must be called from within the
-context of an actor; the individual exceptions to this
-rule are:
+Most of the following functions in this section must be
+called from the context of an actor; the individual
+exceptions to this rule are:
 
-* WebActors.spawn
-* WebActors.send
-* WebActors.kill
+* <code>WebActors.spawn</code>
+* <code>WebActors.send</code>
+* <code>WebActors.kill</code>
 
 === WebActors.spawn(body) -> actor_id
 
@@ -154,22 +154,29 @@ to the callback when it is called.
 
 == Pattern Matching
 
+WebActors also provides a utility function for performing
+structural pattern matching on Javascript values.
+
 === WebActors.match(pattern, value) -> result
 
-<code>match</code> performs structural matching on JavaScript values.
-It takes a pattern and a value, returning an array of
-captured subvalues if the match is successful, or null
-otherwise.
+<code>match</code> performs structural matching on
+JavaScript values. It takes a pattern and a value,
+returning an array of captured subvalues if the match is
+successful, or <code>null</code> otherwise.
 
 === WebActors.any or WebActors.$_
 
-<code>$_</code> matches any value without capturing it.
+When used in a pattern, <code>$_</code> matches any value
+without capturing it.
 
 === WebActors.capture or WebActors.$$
 
-<code>$$</code> matches and captures any value; the match
-may be further constrained by passing an argument to
-<code>$$</code> as a function.
+When used in a pattern, <code>$$</code> matches and
+captures any value; the match may be further constrained by
+passing an argument to <code>$$</code> as a function.
+That is, <code>$$</code> will match anything, whereas
+<code>$$(foo)</code> will only match <code>foo</code>
+(where <code>foo</code> is a pattern).
 
 = Tutorial
 
