@@ -89,7 +89,8 @@ be retrieved with <code>receive</code>.
 === WebActors.send_self(message)
 
 Like <code>send</code>, but sends a message to the current
-actor's mailbox.
+actor's mailbox.  Equivalent to
+<code>WebActors.send(WebActors.self(), message)</code>
 
 === WebActors.receive(pattern, cont)
 
