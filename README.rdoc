@@ -280,7 +280,8 @@ rather than a complete example.)
 In this case, if the actor receives "go left", it will
 print the message about falling off a cliff.  If it
 receives "go right", it will print the message about
-falling into a pit.
+falling into a pit.  Only one or the other of these
+callbacks will fire -- never both.
 
 In both cases the actor terminates after printing its
 message, since neither callback sets up any new receives.
