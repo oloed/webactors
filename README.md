@@ -1,8 +1,8 @@
-  _   _     _   ___      _
- |*|_|*|___|*|_|*  |___ |*|_ ___ ___ ___
- | | | |*_ |   | | |* _|   _|*  |* _|*__|
- | | | | __| | |   | |_ | |_| | | | |__ |
- |_____|___|___|_|_|___||___|___|_| |___|
+     _   _     _   ___      _
+    |*|_|*|___|*|_|*  |___ |*|_ ___ ___ ___
+    | | | |*_ |   | | |* _|   _|*  |* _|*__|
+    | | | | __| | |   | |_ | |_| | | | |__ |
+    |_____|___|___|_|_|___||___|___|_| |___|
 
 WebActors is a simple library for managing concurrency
 in JavaScript programs. It's based on Erlang's
@@ -12,92 +12,84 @@ For an introduction to actors in general, and WebActors in
 particular, scroll down to the section entitled
 "Tutorial".
 
-= Building
+# Building
 
-== Build Requirements
+## Build Requirements
 
-WebActors doesn't have any special run-time requirements
--- it's just a single JavaScript file -- but for now it
-does require ruby, rake, the coffee_script gem and the YUI
-compressor to build from source code.
+WebActors doesn't have any special run-time requirements -- it's just
+a single JavaScript file -- but it requires node.js, npm, and the
+"coffee-script" and "jsmin" npm packages for development.
 
-A suitable version of YUI Compressor is availabile from
-Ubuntu Universe as the <code>yui-compressor</code>
-package.
+## Running Cake
 
-(Eventually I'd like to move to a pure-JavaScript build
-system.)
-
-== Running Rake
-
-Running <code>rake</code> with no arguments will build
-everything.
+Running `cake build` with no arguments will build
+everything. 
 
 The output files are:
 
-* dist/webactors.js - uncompressed version
-* dist/webactors.min.js - minfied version
+  * dist/webactors.js - uncompressed version
+  * dist/webactors.min.js - minfied version
 
 The two should be functionally equivalent.
 
-= API Reference
+# API Reference
 
 WebActors defines a single object in the top-level
 namespace, unsurprisingly called WebActors.  It has a
 number of properties and methods attached to it.
 
-== Actors
+## Actors
 
 Most of the following functions in this section must be
 called from the context of an actor; the individual
 exceptions to this rule are:
 
-* <code>WebActors.spawn</code>
-* <code>WebActors.send</code>
-* <code>WebActors.kill</code>
+  * `WebActors.spawn`
+  * `WebActors.send`
+  * `WebActors.kill`
 
-=== WebActors.spawn(body) -> actor_id
+### WebActors.spawn(body) -> actor_id
 
-The <code>spawn</code> method spawns a new actor, returning
+The `spawn` method spawns a new actor, returning
 its id.
 
-The actor will termiate after <code>body</code> returns,
-unless <code>body</code> suspends the actor by calling
-<code>receive</code>.
+The actor will termiate after `body` returns,
+unless `body` suspends the actor by calling
+`receive`.
 
-<code>spawn</code> may be called outside an actor.
+`spawn` may be called outside an actor.
 
-=== WebActors.spawn_linked(body) -> actor_id
+### WebActors.spawn_linked(body) -> actor_id
 
-The <code>spawn_linked</code> method is similar to
-<code>spawn</code>, except that it atomically links the
+The `spawn_linked` method is similar to
+`spawn`, except that it atomically links the
 spawned actor with the current actor.
 
-=== WebActors.self()
+### WebActors.self()
 
-The <code>self</code> method returns the id of the current
+The `self` method returns the id of the current
 actor.
 
-=== WebActors.send(actor_id, message)
+### WebActors.send(actor_id, message)
 
 Sends a message to another actor asynchronously. The
 message is put in the receiving actor's mailbox, to
-be retrieved with <code>receive</code>.
+be retrieved with `receive`.
 
-<code>send</code> may be called outside an actor.
+`send` may be called outside an actor.
 
-=== WebActors.send_self(message)
+### WebActors.send_self(message)
 
-Like <code>send</code>, but sends a message to the current
+Like `send`, but sends a message to the current
 actor's mailbox.  Equivalent to
-<code>WebActors.send(WebActors.self(), message)</code>
+`WebActors.send(WebActors.self(), message)`
 
-=== WebActors.receive(pattern, cont)
+### WebActors.receive(pattern, cont)
 
 Sets up a one-shot handler to be called if a message
 matching the given pattern arrives.  The pattern will
 be structurally matched against candidate messages
-using <code>match</code>; a list of captured subvalues will
+using `match`; a list of captured subvalues will
 be passed to the supplied continuation callback.
 
 The set of outstanding receives for an actor is
@@ -108,35 +100,35 @@ If an actor doesn't establish any receives before
 returning to the event loop, or if it raises an
 uncaught exception, the actor will terminate.
 
-=== WebActors.link(actor_id)
+### WebActors.link(actor_id)
 
-The <code>link</code> method links the current actor with
+The `link` method links the current actor with
 the given actor, provided there wasn't already an existing
 link between them.
 
-<code>link</code> will raise an error if the named actor is
+`link` will raise an error if the named actor is
 dead or doesn't exist.
 
-=== WebActors.unlink(actor_id)
+### WebActors.unlink(actor_id)
 
-The <code>unlink</code> method unlinks the current actor
+The `unlink` method unlinks the current actor
 from the given actor, if there was an existing link between
 the two.
 
-<code>unlink</code> _won't_ raise an error if no actor with
+`unlink` _won't_ raise an error if no actor with
 the given id exists.
 
-=== WebActors.kill(recipient_id, reason)
+### WebActors.kill(recipient_id, reason)
 
-The <code>kill</code> method sends a kill to the given actor
+The `kill` method sends a kill to the given actor
 whether or not it is linked with the current actor.
 
-<code>kill</code> may be called outside an actor.
+`kill` may be called outside an actor.
 
-=== WebActors.trap_kill(function (killer_id, reason) {...})
+### WebActors.trap_kill(function (killer_id, reason) {...})
 
 Normally, when an actor receives a kill, it will immediately
-exit.  <code>trap_kill</code> allows for more nuanced behavior
+exit.  `trap_kill` allows for more nuanced behavior
 than the default, converting the kill into a regular message.
 
 This passed-in function receives two arguments: the id of
@@ -144,44 +136,43 @@ the originating (not the receiving!) actor, and the reason
 for the kill.  It should return a message to be delivered to
 the receiving actor.
 
-=== WebActors.sendback(args...) -> cb
+### WebActors.sendback(args...) -> cb
 
 Constructs a callback that sends a message to the actor
 that constructed it.  Useful for waiting with setTimeout.
 
 The message sent will consist of the arguments to
-<code>sendback</code> concatented with any arguments passed
+`sendback` concatented with any arguments passed
 to the callback when it is called.
 
-== Pattern Matching
+## Pattern Matching
 
 WebActors also provides a utility function for performing
 structural pattern matching on Javascript values.
 
-=== WebActors.match(pattern, value) -> result
+### WebActors.match(pattern, value) -> result
 
-<code>match</code> performs structural matching on
+`match` performs structural matching on
 JavaScript values. It takes a pattern and a value,
 returning an array of captured subvalues if the match is
-successful, or <code>null</code> otherwise.
+successful, or `null` otherwise.
 
-=== WebActors.any or WebActors.$_
+### WebActors.any or WebActors.$_
 
-When used in a pattern, <code>$_</code> matches any value
+When used in a pattern, `$_` matches any value
 without capturing it.
 
-=== WebActors.capture or WebActors.$$
+### WebActors.capture or WebActors.$$
 
-When used in a pattern, <code>$$</code> matches and
-captures any value; the match may be further constrained by
-passing an argument to <code>$$</code> as a function.
-That is, <code>$$</code> will match anything, whereas
-<code>$$(foo)</code> will only match <code>foo</code>
-(where <code>foo</code> is a pattern).
+When used in a pattern, `$$` matches and captures any
+value; the match may be further constrained by passing
+an argument to `$$` as a function.  That is, `$$` will
+match anything, whereas `$$(foo)` will only match `foo`
+(where `foo` is a pattern).
 
-= Tutorial
+# Tutorial
 
-== Actors Explained
+## Actors Explained
 
 An "actor" is pretty much just a regular process or
 thread with a mailbox attached.  In programming styles
@@ -195,7 +186,7 @@ some getting used to, but actors can make programs simpler,
 and they are also relatively safe from many common
 programming errors.
 
-== Actors in JavaScript
+## Actors in JavaScript
 
 JavaScript has neither processes nor threads (nor
 coroutines), but in the absence of these, actors can still
@@ -203,9 +194,9 @@ be modeled by a chain of callbacks.  Indeed, actor-based
 programming can be a good way to manage the inherent
 complexities of callback-driven programming.
 
-=== Creating Actors and Sending Messages
+### Creating Actors and Sending Messages
 
-The <code>WebActors.spawn</code> function is used to
+The `WebActors.spawn` function is used to
 create a new actor.  This function takes a callback to run
 in the new actor's context, and returns an id representing
 the newly created actor.  This id can be used to submit
@@ -214,18 +205,18 @@ messages to the new actor's mailbox.
  var actor = WebActors.spawn(a_callback); // create an actor
  WebActors.send(actor, "a message"); // send it a message
 
-=== Receiving Messages
+### Receiving Messages
 
-To receive messages, use the <code>WebActors.receive</code>
+To receive messages, use the `WebActors.receive`
 function.  It takes a pattern and a callback to be invoked
 when a matching message is received.
 
- function a_callback() {
-   // $$ matches anything
-   WebActors.receive(WebActors.$$, function (message) {
-     alert(message);
-   });
- }
+    function a_callback() {
+      // $$ matches anything
+      WebActors.receive(WebActors.$$, function (message) {
+        alert(message);
+      });
+    }
 
 If an actor callback sets up a new callback via receive,
 then the actor will continue with the new callback once
@@ -238,45 +229,45 @@ receive one message. That callback, in turn, doesn't set
 up any further callbacks, so the actor terminates at
 that point.
 
-=== Saving Some Typing
+### Saving Some Typing
 
 If you aren't already in the habit of doing so, it can
 be useful (and occasionally more readable) to define local
 aliases for functions defined on library objects.
 
- (function () {
- var spawn = WebActors.spawn;
- var receive = WebActors.receive;
- var send = WebActors.send;
- var $$ = WebActors.$$;
+    (function () {
+    var spawn = WebActors.spawn;
+    var receive = WebActors.receive;
+    var send = WebActors.send;
+    var $$ = WebActors.$$;
 
- function a_callback() {
-   // $$ matches anything
-   WebActors.receive($$, function (message) {
-     alert(message);
-   });
- }
+    function a_callback() {
+      // $$ matches anything
+      WebActors.receive($$, function (message) {
+        alert(message);
+      });
+    }
 
- actor = spawn(a_callback); // create an actor
- send(actor, "a message"); // send it a message
- 
- })();
+    actor = spawn(a_callback); // create an actor
+    send(actor, "a message"); // send it a message
+
+    })();
 
 Subsequent code samples will assume that such aliases have
 already been defined.
 
-=== Multiple Receives
+### Multiple Receives
 
 An actor can also choose between alternatives based on
 the specific message received. (This is a fragment,
 rather than a complete example.)
 
- receive("go left", function () {
-   alert("You fall off a cliff.");
- });
- receive("go right", function () {
-   alert("You stumble into a pit full of spikes.");
- });
+    receive("go left", function () {
+      alert("You fall off a cliff.");
+    });
+    receive("go right", function () {
+      alert("You stumble into a pit full of spikes.");
+    });
 
 In this case, if the actor receives "go left", it will
 print the message about falling off a cliff.  If it
