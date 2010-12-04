@@ -32,6 +32,114 @@ The output files are:
 
 The two should be functionally equivalent.
 
+# Tutorial
+
+## Actors Explained
+
+An "actor" is pretty much just a regular process or
+thread with a mailbox attached.  In programming styles
+based on the Actor Model, threads communicate with each
+other by posting immutable messages to each others'
+mailboxes, rather than by reading and writing fields of
+mutually-shared objects.
+
+Writing concurrent programs using message-passing can take
+some getting used to, but actors can make programs simpler,
+and they are also relatively safe from many common
+programming errors.
+
+## Actors in JavaScript
+
+JavaScript has neither processes nor threads (nor
+coroutines), but in the absence of these, actors can still
+be modeled by a chain of callbacks.  Indeed, actor-based
+programming can be a good way to manage the inherent
+complexities of callback-driven programming.
+
+### Creating Actors and Sending Messages
+
+The `WebActors.spawn` function is used to
+create a new actor.  This function takes a callback to run
+in the new actor's context, and returns an id representing
+the newly created actor.  This id can be used to submit
+messages to the new actor's mailbox.
+
+    var actor = WebActors.spawn(a_callback); // create an actor
+    WebActors.send(actor, "a message"); // send it a message
+
+### Receiving Messages
+
+To receive messages, use the `WebActors.receive`
+function.  It takes a pattern and a callback to be invoked
+when a matching message is received.
+
+    function a_callback() {
+      // $$ matches anything
+      WebActors.receive(WebActors.$$, function (message) {
+        alert(message);
+      });
+    }
+
+If an actor callback sets up a new callback via receive,
+then the actor will continue with the new callback once
+a matching message becomes available.  Otherwise, if a
+callback "breaks the chain", then the actor will terminate
+as soon as the callback finishes.
+
+In the above example, the actor sets up a callback to
+receive one message. That callback, in turn, doesn't set
+up any further callbacks, so the actor terminates at
+that point.
+
+### Saving Some Typing
+
+If you aren't already in the habit of doing so, it can
+be useful (and occasionally more readable) to define local
+aliases for functions defined on library objects.
+
+    (function () {
+    var spawn = WebActors.spawn;
+    var receive = WebActors.receive;
+    var send = WebActors.send;
+    var $$ = WebActors.$$;
+
+    function a_callback() {
+      // $$ matches anything
+      WebActors.receive($$, function (message) {
+        alert(message);
+      });
+    }
+
+    actor = spawn(a_callback); // create an actor
+    send(actor, "a message"); // send it a message
+
+    })();
+
+Subsequent code samples will assume that such aliases have
+already been defined.
+
+### Multiple Receives
+
+An actor can also choose between alternatives based on
+the specific message received. (This is a fragment,
+rather than a complete example.)
+
+    receive("go left", function () {
+      alert("You fall off a cliff.");
+    });
+    receive("go right", function () {
+      alert("You stumble into a pit full of spikes.");
+    });
+
+In this case, if the actor receives "go left", it will
+print the message about falling off a cliff.  If it
+receives "go right", it will print the message about
+falling into a pit.  Only one or the other of these
+callbacks will fire -- never both.
+
+In both cases the actor terminates after printing its
+message, since neither callback sets up any new receives.
+
 # API Reference
 
 WebActors defines a single object in the top-level
@@ -169,111 +277,3 @@ value; the match may be further constrained by passing
 an argument to `$$` as a function.  That is, `$$` will
 match anything, whereas `$$(foo)` will only match `foo`
 (where `foo` is a pattern).
-
-# Tutorial
-
-## Actors Explained
-
-An "actor" is pretty much just a regular process or
-thread with a mailbox attached.  In programming styles
-based on the Actor Model, threads communicate with each
-other by posting immutable messages to each others'
-mailboxes, rather than by reading and writing fields of
-mutually-shared objects.
-
-Writing concurrent programs using message-passing can take
-some getting used to, but actors can make programs simpler,
-and they are also relatively safe from many common
-programming errors.
-
-## Actors in JavaScript
-
-JavaScript has neither processes nor threads (nor
-coroutines), but in the absence of these, actors can still
-be modeled by a chain of callbacks.  Indeed, actor-based
-programming can be a good way to manage the inherent
-complexities of callback-driven programming.
-
-### Creating Actors and Sending Messages
-
-The `WebActors.spawn` function is used to
-create a new actor.  This function takes a callback to run
-in the new actor's context, and returns an id representing
-the newly created actor.  This id can be used to submit
-messages to the new actor's mailbox.
-
-    var actor = WebActors.spawn(a_callback); // create an actor
-    WebActors.send(actor, "a message"); // send it a message
-
-### Receiving Messages
-
-To receive messages, use the `WebActors.receive`
-function.  It takes a pattern and a callback to be invoked
-when a matching message is received.
-
-    function a_callback() {
-      // $$ matches anything
-      WebActors.receive(WebActors.$$, function (message) {
-        alert(message);
-      });
-    }
-
-If an actor callback sets up a new callback via receive,
-then the actor will continue with the new callback once
-a matching message becomes available.  Otherwise, if a
-callback "breaks the chain", then the actor will terminate
-as soon as the callback finishes.
-
-In the above example, the actor sets up a callback to
-receive one message. That callback, in turn, doesn't set
-up any further callbacks, so the actor terminates at
-that point.
-
-### Saving Some Typing
-
-If you aren't already in the habit of doing so, it can
-be useful (and occasionally more readable) to define local
-aliases for functions defined on library objects.
-
-    (function () {
-    var spawn = WebActors.spawn;
-    var receive = WebActors.receive;
-    var send = WebActors.send;
-    var $$ = WebActors.$$;
-
-    function a_callback() {
-      // $$ matches anything
-      WebActors.receive($$, function (message) {
-        alert(message);
-      });
-    }
-
-    actor = spawn(a_callback); // create an actor
-    send(actor, "a message"); // send it a message
-
-    })();
-
-Subsequent code samples will assume that such aliases have
-already been defined.
-
-### Multiple Receives
-
-An actor can also choose between alternatives based on
-the specific message received. (This is a fragment,
-rather than a complete example.)
-
-    receive("go left", function () {
-      alert("You fall off a cliff.");
-    });
-    receive("go right", function () {
-      alert("You stumble into a pit full of spikes.");
-    });
-
-In this case, if the actor receives "go left", it will
-print the message about falling off a cliff.  If it
-receives "go right", it will print the message about
-falling into a pit.  Only one or the other of these
-callbacks will fire -- never both.
-
-In both cases the actor terminates after printing its
-message, since neither callback sets up any new receives.
