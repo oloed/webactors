@@ -1,20 +1,22 @@
 @WebActors ?= {}
 
-current_actor = null
-next_actor_id = 0
-actors_by_id = {}
+class NullActor
+  constructor: ->
+    @actor_id = null
 
-alloc_actor_id = ->
-  next_actor_id++
+  link: (actor_id) ->
+    throw "No current actor"
 
-lookup_actor = (actor_id) ->
-  actors_by_id[actor_id]
+  unlink: (actor_id) ->
 
-register_actor = (actor_id, actor) ->
-  actors_by_id[actor_id] = actor
+  send: (message) ->
 
-unregister_actor = (actor_id) ->
-  delete actors_by_id[actor_id]
+  kill: (killer, reason) ->
+
+  receive: (pattern, cont) ->
+    throw "No current actor"
+
+NULL_ACTOR = new NullActor()
 
 class Actor
   constructor: (@actor_id) ->
@@ -44,15 +46,37 @@ class Actor
     else
       shutdown_actor @actor_id, reason
 
+  receive: (pattern, cont) ->
+    clause = [pattern, cont]
+    if not @clauses
+      @clauses = [clause]
+    else
+      @clauses.push clause
+
   notify_linked: (reason) ->
     for actor_id of @linked
       propagate_kill actor_id, @actor_id, reason
   
+current_actor = NULL_ACTOR
+next_actor_id = 0
+actors_by_id = {}
+
+alloc_actor_id = ->
+  next_actor_id++
+
+lookup_actor = (actor_id) ->
+  actors_by_id[actor_id] or NULL_ACTOR
+
+register_actor = (actor_id, actor) ->
+  actors_by_id[actor_id] = actor
+
+unregister_actor = (actor_id) ->
+  delete actors_by_id[actor_id]
+
 shutdown_actor = (actor_id, reason) ->
   actor = lookup_actor(actor_id)
-  if actor
-    unregister_actor(actor.actor_id)
-    actor.notify_linked(reason)
+  unregister_actor(actor.actor_id)
+  actor.notify_linked(reason)
 
 wrap_actor_cont = (actor, cont, args) ->
   -> 
@@ -65,7 +89,7 @@ wrap_actor_cont = (actor, cont, args) ->
       actor.clauses = null
       reason = e
     finally
-      current_actor = null
+      current_actor = NULL_ACTOR
       if actor.clauses
         actor.mailbox.consumeOnce (message) ->
          for [pattern, cont] in actor.clauses
@@ -90,16 +114,11 @@ spawn_linked = (body) ->
 
 send = (actor_id, message) ->
   actor = lookup_actor(actor_id)
-  if actor
-    actor.send(message)
+  actor.send(message)
 
 receive = (pattern, cont) ->
   actor = current_actor
-  clause = [pattern, cont]
-  if not actor.clauses
-    actor.clauses = [clause]
-  else
-    actor.clauses.push clause
+  current_actor.receive(pattern, cont)
 
 self = ->
   current_actor.actor_id
@@ -112,8 +131,7 @@ trap_kill = (handler) ->
 
 propagate_kill = (actor_id, killer, reason) ->
   actor = lookup_actor(actor_id)
-  if actor
-    actor.kill(killer, reason)
+  actor.kill(killer, reason)
 
 kill = (actor_id, reason) ->
   if current_actor
@@ -124,17 +142,13 @@ kill = (actor_id, reason) ->
 
 link = (actor_id) ->
   actor = lookup_actor(actor_id)
-  if actor
-    current_actor.link(actor_id)
-    actor.link(current_actor.actor_id)
-  else
-    throw "No such actor"
+  current_actor.link(actor_id)
+  actor.link(current_actor.actor_id)
 
 unlink = (actor_id) ->
   actor = lookup_actor(actor_id)
-  if actor
-    current_actor.unlink(actor_id)
-    actor.unlink(current_actor.actor_id)
+  actor.unlink(current_actor.actor_id)
+  current_actor.unlink(actor_id)
 
 sendback = (curried_args...) ->
   actor_id = self()
