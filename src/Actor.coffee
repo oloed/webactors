@@ -75,6 +75,10 @@ class Actor
     else
       @clauses.push clause
 
+  start: (body) ->
+    register_actor @actor_id, this
+    setTimeout(@wrap_cont(body, []), 0)
+
   shutdown: (reason) ->
     @killed = true
     unregister_actor @actor_id
@@ -112,14 +116,25 @@ class Actor
         else
           actor.shutdown(reason)
   
+gateways = {}
 next_actor_id = 0
 actors_by_id = {}
+actor_prefix = "$window"
 
 alloc_actor_id = ->
-  next_actor_id++
+  "#{actor_prefix}:#{next_actor_id++}"
 
 lookup_actor = (actor_id) ->
-  actors_by_id[actor_id] or new DeadActor(actor_id)
+  actor = actors_by_id[actor_id]
+  if not actor
+    prefix = actor_id.split(":", 1)
+    body = gateways[prefix]
+    if body
+      actor = new Actor(actor_id)
+      actor.start(body)
+    else
+      actor = new DeadActor(actor_id)
+  actor
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor
@@ -130,8 +145,7 @@ unregister_actor = (actor_id) ->
 spawn = (body) ->
   actor_id = alloc_actor_id()
   actor = new Actor(actor_id)
-  register_actor(actor_id, actor)
-  setTimeout(actor.wrap_cont(body, []), 0)
+  actor.start(body)
   actor_id
 
 spawn_linked = (body) ->
@@ -175,6 +189,12 @@ sendback = (curried_args...) ->
   (callback_args...) ->
     send actor_id, curried_args.concat(callback_args)
 
+register_gateway = (prefix, body) ->
+  gateways[prefix] = body
+
+unregister_gateway = (prefix) ->
+  delete gateways[prefix]
+
 @WebActors.spawn = spawn
 @WebActors.spawn_linked = spawn_linked
 @WebActors.send = send
@@ -186,3 +206,5 @@ sendback = (curried_args...) ->
 @WebActors.link = link
 @WebActors.unlink = unlink
 @WebActors.sendback = sendback
+@WebActors.register_gateway = register_gateway
+@WebActors.unregister_gateway = unregister_gateway
