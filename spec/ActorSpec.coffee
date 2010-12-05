@@ -276,3 +276,26 @@ describe "A WebActors Actor", ->
     runs -> WebActors.kill root_id, "foobar"
 
     waitsFor -> passed
+
+  it "should support kill before initial callback runs", ->
+    ready = false
+    got_kill = false
+    body_run = false
+
+    WebActors.spawn ->
+      WebActors.trap_kill (killer_id, reason) -> [killer_id, reason]
+
+      actor_a_id = WebActors.spawn_linked ->
+        body_run = true
+
+      WebActors.kill actor_a_id, "foobar"
+
+      WebActors.receive [actor_a_id, "foobar"], -> got_kill = true
+
+      setTimeout((-> ready = true), 500)
+
+    waitsFor -> ready
+
+    runs ->
+      expect(got_kill).toBeTruthy()
+      expect(body_run).toBeFalsy()

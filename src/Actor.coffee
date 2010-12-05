@@ -26,6 +26,7 @@ current_actor = NULL_ACTOR
 class Actor
   constructor: (@actor_id) ->
     @mailbox = new WebActors.Mailbox()
+    @killed = false
     @state = {}
     @clauses = null
     @kill_handler = null
@@ -62,6 +63,7 @@ class Actor
       @clauses.push clause
 
   shutdown: (reason) ->
+    @killed = true
     unregister_actor @actor_id
     for actor_id of @linked
       actor = lookup_actor(actor_id)
@@ -71,6 +73,7 @@ class Actor
     actor = this
     -> 
       actor.clauses = null
+      return if actor.killed
       reason = null
       current_actor = actor
       try
@@ -81,6 +84,9 @@ class Actor
         reason = e
       finally
         current_actor = NULL_ACTOR
+        if actor.killed
+          actor.clauses = null
+          return
         if actor.clauses
           actor.mailbox.consumeOnce (message) ->
             for [pattern, cont] in actor.clauses
