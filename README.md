@@ -237,12 +237,18 @@ whether or not it is linked with the current actor.
 
 Normally, when an actor receives a kill, it will immediately
 exit.  `trap_kill` allows for more nuanced behavior
-than the default, converting the kill into a regular message.
+than the default.
 
 This passed-in function receives two arguments: the id of
 the originating (not the receiving!) actor, and the reason
-for the kill.  It should return a message to be delivered to
-the receiving actor.
+for the kill.  If it throws an exception, the actor will
+die with that exception.
+
+Note that the callback does NOT run in the context of an
+actor, so functions like `receive` should not be used.
+
+Typically, `sendback` is used with `trap_kill` to redirect
+the kill to the actor's mailbox as a regular message.
 
 ### WebActors.sendback(args...) -> cb
 

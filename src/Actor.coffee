@@ -43,12 +43,14 @@ class Actor
 
   kill: (killer_id, reason) ->
     if @kill_handler
+      saved_actor = current_actor
+      current_actor = NULL_ACTOR
       try
-        message = @kill_handler(killer_id, reason)
+        @kill_handler(killer_id, reason)
       catch e
         @shutdown(e)
-        return
-      send @actor_id, message
+      finally
+        current_actor = saved_actor
     else
       @shutdown(reason)
 
