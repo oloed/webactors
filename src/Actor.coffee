@@ -23,6 +23,17 @@ class NullActor
 NULL_ACTOR = new NullActor()
 current_actor = NULL_ACTOR
 
+class DeadActor
+  constructor: (@actor_id) ->
+
+  link: (actor_id) ->
+    actor = lookup_actor(actor_id)
+    actor.kill(@actor_id, "No such actor")
+
+  unlink: (actor_id) ->
+
+  kill: (killer_id, reason) ->
+
 class Actor
   constructor: (@actor_id) ->
     @mailbox = new WebActors.Mailbox()
@@ -67,7 +78,9 @@ class Actor
   shutdown: (reason) ->
     @killed = true
     unregister_actor @actor_id
-    for actor_id of @linked
+    linked = @linked
+    @linked = null
+    for actor_id of linked
       actor = lookup_actor(actor_id)
       actor.kill(@actor_id, reason)
 
@@ -106,7 +119,7 @@ alloc_actor_id = ->
   next_actor_id++
 
 lookup_actor = (actor_id) ->
-  actors_by_id[actor_id] or NULL_ACTOR
+  actors_by_id[actor_id] or new DeadActor(actor_id)
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor

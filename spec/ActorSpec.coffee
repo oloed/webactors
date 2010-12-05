@@ -149,11 +149,8 @@ describe "A WebActors Actor", ->
     root_id = WebActors.spawn ->
       WebActors.trap_kill WebActors.sendback()
       actor_a_id = "bogus"
-      actor_b_id = WebActors.spawn ->
-        WebActors.link root_id
-        WebActors.receive $$, ->
-        WebActors.link actor_a_id
-      WebActors.receive [actor_b_id, $_], -> passed = true
+      WebActors.link actor_a_id
+      WebActors.receive [actor_a_id, $_], -> passed = true
 
     waitsFor -> passed
 
@@ -163,14 +160,14 @@ describe "A WebActors Actor", ->
     root_id = WebActors.spawn ->
       WebActors.trap_kill WebActors.sendback()
 
-      actor_a_id = WebActors.spawn ->
-        WebActors.link root_id
+      actor_a_id = WebActors.spawn_linked ->
+        WebActors.receive $_, ->
+
+      actor_b_id = WebActors.spawn ->
+        WebActors.link actor_a_id
 
       WebActors.receive [actor_a_id, $_], ->
-        actor_b_id = WebActors.spawn ->
-          WebActors.link root_id
-          WebActors.receive $$, ->
-          WebActors.link actor_a_id
+        WebActors.link actor_b_id
         WebActors.receive [actor_b_id, $_], -> passed = true
 
     waitsFor -> passed
