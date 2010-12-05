@@ -21,6 +21,7 @@ class NullActor
     throw "No current actor"
 
 NULL_ACTOR = new NullActor()
+current_actor = NULL_ACTOR
 
 class Actor
   constructor: (@actor_id) ->
@@ -65,8 +66,31 @@ class Actor
     for actor_id of @linked
       actor = lookup_actor(actor_id)
       actor.kill(@actor_id, reason)
+
+  wrap_cont: (cont, args) ->
+    actor = this
+    -> 
+      actor.clauses = null
+      reason = null
+      current_actor = actor
+      try
+        cont.apply(actor.state, args)
+      catch e
+        console.error(String(e))
+        actor.clauses = null
+        reason = e
+      finally
+        current_actor = NULL_ACTOR
+        if actor.clauses
+          actor.mailbox.consumeOnce (message) ->
+            for [pattern, cont] in actor.clauses
+              captured = WebActors.match(pattern, message)
+              if captured
+                return actor.wrap_cont(cont, captured)
+            return null
+        else
+          actor.shutdown(reason)
   
-current_actor = NULL_ACTOR
 next_actor_id = 0
 actors_by_id = {}
 
@@ -82,34 +106,11 @@ register_actor = (actor_id, actor) ->
 unregister_actor = (actor_id) ->
   delete actors_by_id[actor_id]
 
-wrap_actor_cont = (actor, cont, args) ->
-  -> 
-    actor.clauses = null
-    reason = null
-    current_actor = actor
-    try
-      cont.apply(actor.state, args)
-    catch e
-      console.error(String(e))
-      actor.clauses = null
-      reason = e
-    finally
-      current_actor = NULL_ACTOR
-      if actor.clauses
-        actor.mailbox.consumeOnce (message) ->
-          for [pattern, cont] in actor.clauses
-            captured = WebActors.match(pattern, message)
-            if captured
-              return wrap_actor_cont(actor, cont, captured)
-          return null
-      else
-        actor.shutdown(reason)
-
 spawn = (body) ->
   actor_id = alloc_actor_id()
   actor = new Actor(actor_id)
   register_actor(actor_id, actor)
-  setTimeout(wrap_actor_cont(actor, body, []), 0)
+  setTimeout(actor.wrap_cont(body, []), 0)
   actor_id
 
 spawn_linked = (body) ->
