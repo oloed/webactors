@@ -117,12 +117,12 @@ class Actor
           actor.shutdown(reason)
   
 gateways = {}
-next_actor_id = 0
+next_actor_serial = 0
 actors_by_id = {}
 actor_prefix = "$window"
 
 alloc_actor_id = ->
-  "#{actor_prefix}:#{next_actor_id++}"
+  "#{actor_prefix}:#{next_actor_serial++}"
 
 lookup_actor = (actor_id) ->
   actor = actors_by_id[actor_id]
