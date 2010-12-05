@@ -8,10 +8,14 @@ class NullActor
     throw "No current actor"
 
   unlink: (actor_id) ->
+    throw "No current actor"
 
   send: (message) ->
 
-  kill: (killer, reason) ->
+  kill: (killer_id, reason) ->
+
+  trap_kill: (handler) ->
+    throw "No current actor"
 
   receive: (pattern, cont) ->
     throw "No current actor"
@@ -35,16 +39,19 @@ class Actor
   send: (message) ->
     @mailbox.postMessage(message)
 
-  kill: (killer, reason) ->
+  kill: (killer_id, reason) ->
     if @kill_handler
       try
-        message = @kill_handler(killer, reason)
+        message = @kill_handler(killer_id, reason)
       catch e
-        shutdown_actor @actor_id, e
+        @shutdown(e)
         return
       send @actor_id, message
     else
-      shutdown_actor @actor_id, reason
+      @shutdown(reason)
+
+  trap_kill: (handler) ->
+    @kill_handler = handler
 
   receive: (pattern, cont) ->
     clause = [pattern, cont]
@@ -53,9 +60,11 @@ class Actor
     else
       @clauses.push clause
 
-  notify_linked: (reason) ->
+  shutdown: (reason) ->
+    unregister_actor @actor_id
     for actor_id of @linked
-      propagate_kill actor_id, @actor_id, reason
+      actor = lookup_actor(actor_id)
+      actor.kill(@actor_id, reason)
   
 current_actor = NULL_ACTOR
 next_actor_id = 0
@@ -73,11 +82,6 @@ register_actor = (actor_id, actor) ->
 unregister_actor = (actor_id) ->
   delete actors_by_id[actor_id]
 
-shutdown_actor = (actor_id, reason) ->
-  actor = lookup_actor(actor_id)
-  unregister_actor(actor.actor_id)
-  actor.notify_linked(reason)
-
 wrap_actor_cont = (actor, cont, args) ->
   -> 
     actor.clauses = null
@@ -86,19 +90,20 @@ wrap_actor_cont = (actor, cont, args) ->
     try
       cont.apply(actor.state, args)
     catch e
+      console.error(String(e))
       actor.clauses = null
       reason = e
     finally
       current_actor = NULL_ACTOR
       if actor.clauses
         actor.mailbox.consumeOnce (message) ->
-         for [pattern, cont] in actor.clauses
+          for [pattern, cont] in actor.clauses
             captured = WebActors.match(pattern, message)
             if captured
               return wrap_actor_cont(actor, cont, captured)
           return null
       else
-        shutdown_actor actor.actor_id, reason
+        actor.shutdown(reason)
 
 spawn = (body) ->
   actor_id = alloc_actor_id()
@@ -127,28 +132,21 @@ send_self = (message) ->
   send current_actor.actor_id, message
 
 trap_kill = (handler) ->
-  current_actor.kill_handler = handler
-
-propagate_kill = (actor_id, killer, reason) ->
-  actor = lookup_actor(actor_id)
-  actor.kill(killer, reason)
+  current_actor.trap_kill handler
 
 kill = (actor_id, reason) ->
-  if current_actor
-    recipient_id = current_actor.actor_id
-  else
-    recipient_id = null
-  propagate_kill actor_id, recipient_id, reason
+  actor = lookup_actor(actor_id)
+  actor.kill(current_actor.actor_id, reason)
 
 link = (actor_id) ->
-  actor = lookup_actor(actor_id)
   current_actor.link(actor_id)
+  actor = lookup_actor(actor_id)
   actor.link(current_actor.actor_id)
 
 unlink = (actor_id) ->
+  current_actor.unlink(actor_id)
   actor = lookup_actor(actor_id)
   actor.unlink(current_actor.actor_id)
-  current_actor.unlink(actor_id)
 
 sendback = (curried_args...) ->
   actor_id = self()
