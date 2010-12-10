@@ -308,30 +308,3 @@ describe "A WebActors Actor", ->
       WebActors.receive $_, ->
 
     waitsFor -> actor_id is null
-
-  it "should allow gateways to be registered", ->
-    received = []
-
-    WebActors.register_gateway "foo", ->
-      WebActors.receive $$, (m) ->
-        received.push([WebActors.self(), m])
-
-    WebActors.send "foo:0", "foobar"
-
-    waitsFor -> received.length > 0
-
-    runs -> expect(received).toEqual([["foo:0", "foobar"]])
-
-  it "should allow gateways to be unregistered", ->
-    passed = false
-
-    WebActors.register_gateway "foo", ->
-      WebActors.receive $_, ->
-    WebActors.unregister_gateway "foo"
-
-    WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
-      WebActors.link "foo:0"
-      WebActors.receive ["foo:0", $_], -> passed = true
-
-    waitsFor -> passed

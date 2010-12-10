@@ -116,7 +116,6 @@ class Actor
         else
           actor.shutdown(reason)
   
-gateways = {}
 next_actor_serial = 0
 actors_by_id = {}
 actor_prefix = "$window"
@@ -125,16 +124,7 @@ alloc_actor_id = ->
   "#{actor_prefix}:#{next_actor_serial++}"
 
 lookup_actor = (actor_id) ->
-  actor = actors_by_id[actor_id]
-  if not actor
-    prefix = actor_id.split(":", 1)
-    body = gateways[prefix]
-    if body
-      actor = new Actor(actor_id)
-      actor.start(body)
-    else
-      actor = new DeadActor(actor_id)
-  actor
+  actors_by_id[actor_id] or new DeadActor(actor_id)
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor
@@ -189,12 +179,6 @@ sendback = (curried_args...) ->
   (callback_args...) ->
     send actor_id, curried_args.concat(callback_args)
 
-register_gateway = (prefix, body) ->
-  gateways[prefix] = body
-
-unregister_gateway = (prefix) ->
-  delete gateways[prefix]
-
 @WebActors.spawn = spawn
 @WebActors.spawn_linked = spawn_linked
 @WebActors.send = send
@@ -206,5 +190,3 @@ unregister_gateway = (prefix) ->
 @WebActors.link = link
 @WebActors.unlink = unlink
 @WebActors.sendback = sendback
-@WebActors.register_gateway = register_gateway
-@WebActors.unregister_gateway = unregister_gateway
