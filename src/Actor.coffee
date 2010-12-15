@@ -32,9 +32,29 @@ class DeadActor
 
   unlink: (actor_id) ->
 
+  send: (message) ->
+
   kill: (killer_id, reason) ->
 
-class Actor
+class RemoteActor
+  constructor: (@node, @actor_id) ->
+
+  route: (message) ->
+    WebActors._router.route_message(@node, message)
+
+  link: (actor_id) ->
+    @route ["link", @actor_id, actor_id]
+
+  unlink: (actor_id) ->
+    @route ["unlink", @actor_id, actor_id]
+
+  send: (message) ->
+    @route ["send", @actor_id, message]
+
+  kill: (killer_id, reason) ->
+    @route ["kill", @actor_id, killer_id, reason]
+
+class LocalActor
   constructor: (@actor_id) ->
     @mailbox = new WebActors.Mailbox()
     @killed = false
@@ -118,13 +138,23 @@ class Actor
   
 next_actor_serial = 0
 actors_by_id = {}
-actor_prefix = "$window"
+local_node = "root"
 
 alloc_actor_id = ->
-  "#{actor_prefix}:#{next_actor_serial++}"
+  "#{local_node}:#{next_actor_serial++}"
+
+node_for_actor = (actor_id) ->
+  idx = actor_id.lastIndexOf(":")
+  return actor_id.substr(0, idx)
 
 lookup_actor = (actor_id) ->
-  actors_by_id[actor_id] or new DeadActor(actor_id)
+  actor = actors_by_id[actor_id]
+  return actor if actor
+  node = node_for_actor(actor_id)
+  if node is local_node
+    return new DeadActor(actor_id)
+  else
+    return new RemoteActor(node, actor_id)
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor
@@ -134,7 +164,7 @@ unregister_actor = (actor_id) ->
 
 spawn = (body) ->
   actor_id = alloc_actor_id()
-  actor = new Actor(actor_id)
+  actor = new LocalActor(actor_id)
   actor.start(body)
   actor_id
 

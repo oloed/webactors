@@ -148,7 +148,7 @@ describe "A WebActors Actor", ->
 
     root_id = WebActors.spawn ->
       WebActors.trap_kill WebActors.sendback()
-      actor_a_id = "bogus"
+      actor_a_id = "root:foo"
       WebActors.link actor_a_id
       WebActors.receive [actor_a_id, $_], -> passed = true
 
