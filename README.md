@@ -105,7 +105,7 @@ aliases for functions defined on library objects.
 
     function a_callback() {
       // $$ matches anything
-      WebActors.receive($$, function (message) {
+      receive($$, function (message) {
         alert(message);
       });
     }
