@@ -2,23 +2,30 @@
 
 class Router
   constructor: ->
-    @default_gateway = (node, message) ->
+    @default_gateway = (actor_id, verb, param) ->
     @gateways = {}
 
-  route_message: (node, message) ->
-    gateway = @gateways[node] or @default_gateway
-    gateway(node, message)
+  route_message: (actor_id, verb, param) ->
+    gateway = null
+    prefix = actor_id
+    until (separator_index = prefix.lastIndexOf(":")) is -1
+      prefix = actor_id.substr(0, separator_index)
+      gateway = @gateways[prefix]
+      break if gateway
+    gateway = gateway or @default_gateway
+    gateway(actor_id, verb, param)
     undefined
 
-  register_gateway: (node, callback) ->
-    @gateways[node] = callback
+  register_gateway: (prefix, callback) ->
+    @gateways[prefix] = callback
     undefined
 
-  unregister_gateway: (node) ->
-    delete @gateways[node]
+  unregister_gateway: (prefix) ->
+    delete @gateways[prefix]
     undefined
 
   set_default_gateway: (callback) ->
     @default_gateway = callback
+    undefined
 
 @WebActors.Router = Router

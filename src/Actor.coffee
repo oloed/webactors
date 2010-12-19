@@ -37,22 +37,22 @@ class DeadActor
   kill: (killer_id, reason) ->
 
 class RemoteActor
-  constructor: (@node, @actor_id) ->
+  constructor: (@actor_id) ->
 
-  route: (message) ->
-    WebActors._router.route_message(@node, message)
+  route: (verb, param) ->
+    WebActors._router.route_message(@actor_id, verb, param)
 
   link: (actor_id) ->
-    @route ["link", @actor_id, actor_id]
+    @route "link", actor_id
 
   unlink: (actor_id) ->
-    @route ["unlink", @actor_id, actor_id]
+    @route "unlink", actor_id
 
   send: (message) ->
-    @route ["send", @actor_id, message]
+    @route "send", message
 
   kill: (killer_id, reason) ->
-    @route ["kill", @actor_id, killer_id, reason]
+    @route "kill", [killer_id, reason]
 
 class LocalActor
   constructor: (@actor_id) ->
@@ -138,23 +138,19 @@ class LocalActor
   
 next_actor_serial = 0
 actors_by_id = {}
-local_node = "root"
+local_prefix = "root"
 
 alloc_actor_id = ->
-  "#{local_node}:#{next_actor_serial++}"
-
-node_for_actor = (actor_id) ->
-  idx = actor_id.lastIndexOf(":")
-  return actor_id.substr(0, idx)
+  "#{local_prefix}:#{next_actor_serial++}"
 
 lookup_actor = (actor_id) ->
   actor = actors_by_id[actor_id]
   return actor if actor
-  node = node_for_actor(actor_id)
-  if node is local_node
+  prefix = actor_id.substr(0, actor_id.lastIndexOf(":"))
+  if prefix is local_prefix
     return new DeadActor(actor_id)
   else
-    return new RemoteActor(node, actor_id)
+    return new RemoteActor(actor_id)
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor
