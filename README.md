@@ -5,8 +5,8 @@
     |_____|___|___|_|_|___||___|___|_| |___|
 
 WebActors is a simple library for managing concurrency
-in JavaScript programs. It's based on Erlang's
-adaptation of the Actor Model.
+in JavaScript programs. It's heavily based on Erlang's
+interpretation of the Actor Model.
 
 For an introduction to actors in general, and WebActors in
 particular, scroll down to the section entitled
@@ -21,7 +21,14 @@ WebActors doesn't have any special run-time requirements
 requires node.js, npm, and the "coffee-script" and "jsmin"
 npm packages for development.
 
-## Running Cake
+## Running Specs
+
+Running `cake spec` will start a local webserver and print
+a URL which can be used to run the Jasmine specs.  On most
+Linux systems (anything that has xdg-open), it will also
+open a browser window.
+
+## Building
 
 Running `cake build` with no arguments will build
 everything. 
