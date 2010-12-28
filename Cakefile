@@ -4,10 +4,13 @@ jsmin  = require("jsmin").jsmin
 sys    = require "sys"
 http   = require "http"
 url    = require "url"
+spawn  = require("child_process").spawn
 
 binding = process.binding('net')
 
 ENOENT = binding.ENOENT
+EPERM = binding.EPERM
+EACCES = binding.EACCES
 getsockname = binding.getsockname
 
 coffeefiles = (dir) ->
@@ -16,7 +19,7 @@ coffeefiles = (dir) ->
 jsfiles = (dir) ->
   "#{dir}/#{f}" for f in fs.readdirSync dir when /\.js$/.test f
 
-task "build", "Build distributable files.", ->
+task "build", "Build delectable files.", ->
   files = coffeefiles("src")
 
   compiled = for src in files
@@ -34,14 +37,18 @@ CONTENT_TYPES =
   css: 'text/css'
   js: 'text/javascript'
 
+make_posix_error = (message, errno) ->
+  err = new Error(message)
+  err.errno = errno
+  err
+
 read_file_content = (path, cb) ->
   fs.readFile path, cb
 
 transcode_coffeescript = (path, cb) ->
   idx = path.search(/\.js$/)
   if idx is -1
-    err = new Error("#{path}: No such file or directory")
-    err.errno = ENOENT
+    err = make_posix_error("#{path}: No such file or directory", ENOENT)
     cb(err, null)
   else
     coffee_path = "#{path.substr(0, idx)}.coffee"
@@ -59,14 +66,26 @@ transcode_coffeescript = (path, cb) ->
         cb(null, new Buffer(js_script, "utf8"))
     
 get_content = (path, cb) ->
-  read_file_content path, (err, data) ->
-    if err and err.errno is ENOENT
-      transcode_coffeescript path, cb
-    else
-      cb(err, data)
+  if path.search(/\.\./) isnt -1 or path.substr(path.length - 1, 1) is "/"
+    err = make_posix_error("#{path}: Permission denied", EACCES)
+    cb(err, null)
+  else
+    read_file_content path, (err, data) ->
+      if err and err.errno is ENOENT
+        transcode_coffeescript path, cb
+      else
+        cb(err, data)
 
-task "serve", "Serve yummy specs.", ->
+task "spec", "Serve yummy specs.", ->
   server = http.createServer (request, response) ->
+    if request.method isnt "HEAD" and request.method isnt "GET"
+      headers =
+        'Content-Type': 'text/plain'
+        'Accept': 'GET, HEAD'
+      response.writeHead(405, headers)
+      response.write("405 Method Not Allowed\n")
+      response.end()
+      return
     path = url.parse(request.url).pathname
     m = /\.([a-z]+)$/.exec(path)
     if m
@@ -77,16 +96,22 @@ task "serve", "Serve yummy specs.", ->
     get_content path, (err, data) ->
       if err
         if err.errno is ENOENT
-          response.writeHead(404, {'content-type': 'text/plain'})
-          response.write("404 Not Found")
+          response.writeHead(404, {'Content-Type': 'text/plain'})
+          unless request.method is "HEAD"
+            response.write("404 Not Found\n")
+        if err.errno is EPERM or err.errno is EACCES
+          response.writeHead(403, {'Content-Type': 'text/plain'})
+          unless request.method is "HEAD"
+            response.write("403 Forbidden\n")
         else
-          response.writeHead(500, {'content-type': 'text/plain'})
-          response.write("500 Internal Server Error\n#{err}")
+          response.writeHead(500, {'Content-Type': 'text/plain'})
+          unless request.method is "HEAD"
+            response.write("500 Internal Server Error\n#{err}\n")
       else
         headers =
-          'content-type': CONTENT_TYPES[ext] or 'text/plain'
-          'content-encoding': 'UTF-8'
-          'content-length': data.length
+          'Content-Type': CONTENT_TYPES[ext] or 'text/plain'
+          'Content-Encoding': 'UTF-8'
+          'Content-Length': data.length
         response.writeHead(200, headers)
         unless request.method is "HEAD"
           response.write(data)
@@ -94,7 +119,9 @@ task "serve", "Serve yummy specs.", ->
 
   server.listen 0, "localhost", ->
     address = getsockname(server.fd)
-    sys.print("Serving at http://localhost:#{address.port}/SpecRunner.html\n")
+    spec_url = "http://localhost:#{address.port}/SpecRunner.html"
+    sys.print("Serving at #{spec_url}\n")
+    spawn('xdg-open', [spec_url])
 
 task "clean", "Clean dirty leftovers.", ->
   files = jsfiles("dist").concat(jsfiles "src").concat jsfiles("spec")
