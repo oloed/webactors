@@ -50,19 +50,28 @@ read_file_content = (path, cb) ->
 transcode_webactors_js = (path, cb) ->
   if path isnt "dist/webactors.js"
     err = errnoException(ENOENT, path)
-    return cb(err, null)
+    cb(err, null)
+    return
   try
     src = compile_webactors_js()
-    return cb(null, new Buffer(src, "utf8"))
+    cb(null, new Buffer(src, "utf8"))
   catch e
     cb(e, null)
 
+get_file_extension = (path) ->
+  m = /\.([a-z]+)$/.exec(path)
+  if m
+    return m[1]
+  else
+    return ""
+
 transcode_coffeescript = (path, cb) ->
-  idx = path.search(/\.js$/)
-  if idx is -1
+  ext = get_file_extension(path)
+  unless ext is "js"
     err = errnoException(ENOENT, path)
-    return cb(err, null)
-  coffee_path = "#{path.substr(0, idx)}.coffee"
+    cb(err, null)
+    return
+  coffee_path = path.replace(/\.js$/, '.coffee')
   read_file_content coffee_path, (err, data) ->
     if err
       cb(err, null)
@@ -110,12 +119,8 @@ task "spec", "Serve yummy specs.", ->
       response.end()
       return
     path = url.parse(request.url).pathname
-    m = /\.([a-z]+)$/.exec(path)
-    if m
-      ext = m[1]
-    else
-      ext = ""
-    path = path.substr(1)
+    ext = get_file_extension(path)
+    path = path.substr(1) # remove leading /
     get_content path, (err, data) ->
       if err
         if err.errno is ENOENT
