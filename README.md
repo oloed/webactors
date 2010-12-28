@@ -139,7 +139,7 @@ aliases for functions defined on library objects.
 Subsequent code samples will assume that such aliases have
 already been defined.
 
-### Multiple Receives
+### Simultaneous Receives (Choice)
 
 An actor can also choose between alternatives based on
 the specific message received. (This is a fragment,
@@ -153,13 +153,35 @@ rather than a complete example.)
     });
 
 In this case, if the actor receives "go left", it will
-print the message about falling off a cliff.  If it
-receives "go right", it will print the message about
-falling into a pit.  Only one or the other of these
-callbacks will fire -- never both.
+print the message about falling off a cliff and
+terminate.  If it receives "go right", it will print
+the message about falling into a pit and terminate.
 
-In both cases the actor terminates after printing its
-message, since neither callback sets up any new receives.
+Only one or the other of these callbacks will fire --
+never both.  If a message matches multiple outstanding
+receives (which is possible when wildcards are used), the
+callback associated with the first matching pattern will
+be called.
+
+### Chained Receives (Sequencing)
+
+An actor can also specifically choose the order in which
+it responds to messages by chaining calls to receive.
+For example:
+
+    receive("up", function () {
+      alert("Going up!");
+      receive("down", function () {
+        alert("Going down!");
+      });
+    });
+
+An arrangement like this guarantees that the actor will 
+receive (and act upon) the "up" message before it
+receives "down", regardless of the order in which those
+messages were originally sent.
+
+### Supervision Trees
 
 # API Reference
 
@@ -203,7 +225,8 @@ actor.
 
 Sends a message to another actor asynchronously. The
 message is put in the receiving actor's mailbox, to
-be retrieved with `receive`.
+be retrieved with `receive`.  If the specified actor
+doesn't exist, `send` has no effect.
 
 `send` may be called outside an actor.
 
@@ -235,8 +258,8 @@ The `link` method links the current actor with
 the given actor, provided there wasn't already an existing
 link between them.
 
-`link` will raise an error if the named actor is
-dead or doesn't exist.
+If the specified actor doesn't exist, then `link` will
+kill the current actor.
 
 ### WebActors.unlink(actor_id)
 
@@ -244,13 +267,14 @@ The `unlink` method unlinks the current actor
 from the given actor, if there was an existing link between
 the two.
 
-`unlink` _won't_ raise an error if no actor with
-the given id exists.
+`unlink` has no effect if the specified actor doesn't
+exist.
 
 ### WebActors.kill(recipient_id, reason)
 
-The `kill` method sends a kill to the given actor
-whether or not it is linked with the current actor.
+The `kill` method kills the given actor whether or not it
+is linked with the current actor.  It has no effect if the
+specified actor doesn't exist.
 
 `kill` may be called outside an actor.
 
