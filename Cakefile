@@ -12,6 +12,7 @@ ENOENT = binding.ENOENT
 EPERM = binding.EPERM
 EACCES = binding.EACCES
 getsockname = binding.getsockname
+errnoException = binding.errnoException
 
 coffeefiles = (dir) ->
   "#{dir}/#{f}" for f in fs.readdirSync dir when /\.coffee$/.test f
@@ -19,36 +20,47 @@ coffeefiles = (dir) ->
 jsfiles = (dir) ->
   "#{dir}/#{f}" for f in fs.readdirSync dir when /\.js$/.test f
 
-task "build", "Build delectable files.", ->
+compile_webactors_js = ->
   files = coffeefiles("src")
-
   compiled = for src in files
     data = fs.readFileSync src, "utf8"
-    coffee.compile(data)
+    try
+      coffee.compile(data)
+    catch e
+      e.message = "#{src}: #{e.message}"
+      raise e
+  compiled.join("\n")
 
-  src = compiled.join("\n")
-
+task "build", "Build delectable files.", ->
+  src = compile_webactors_js()
   fs.mkdir "dist", 0755, (err) ->
     fs.writeFile "dist/webactors.js", src, ->
       fs.writeFile "dist/webactors.min.js", jsmin(src)
 
-CONTENT_TYPES =
-  html: 'text/html'
-  css: 'text/css'
-  js: 'text/javascript'
-
-make_posix_error = (message, errno) ->
-  err = new Error(message)
-  err.errno = errno
-  err
+prohibit_bad_paths = (path, cb) ->
+  if path.search(/\.\./) isnt -1 or path.substr(path.length - 1, 1) is "/"
+    err = errnoException(EACCES, path)
+  else
+    err = errnoException(ENOENT, path)
+  cb(err, null)
 
 read_file_content = (path, cb) ->
   fs.readFile path, cb
 
+transcode_webactors_js = (path, cb) ->
+  if path isnt "dist/webactors.js"
+    err = errnoException(ENOENT, path)
+    return cb(err, null)
+  try
+    src = compile_webactors_js()
+    return cb(null, src)
+  catch e
+    cb(e, null)
+
 transcode_coffeescript = (path, cb) ->
   idx = path.search(/\.js$/)
   if idx is -1
-    err = make_posix_error("#{path}: No such file or directory", ENOENT)
+    err = errnoException(ENOENT, path)
     cb(err, null)
   else
     coffee_path = "#{path.substr(0, idx)}.coffee"
@@ -64,17 +76,29 @@ transcode_coffeescript = (path, cb) ->
           error_string = JSON.stringify(error_message)
           js_script = "console.error(#{error_string})"
         cb(null, new Buffer(js_script, "utf8"))
-    
-get_content = (path, cb) ->
-  if path.search(/\.\./) isnt -1 or path.substr(path.length - 1, 1) is "/"
-    err = make_posix_error("#{path}: Permission denied", EACCES)
-    cb(err, null)
-  else
-    read_file_content path, (err, data) ->
+
+compose_two_content_sources = (a, b) ->
+  (path, cb) ->
+    a path, (err, data) ->
       if err and err.errno is ENOENT
-        transcode_coffeescript path, cb
+        b path, cb
       else
         cb(err, data)
+
+compose_content_sources = (composed, remaining...) ->
+  for source in remaining
+    composed = compose_two_content_sources(composed, source)
+  composed
+
+get_content = compose_content_sources prohibit_bad_paths,
+                                      transcode_webactors_js,
+                                      read_file_content,
+                                      transcode_coffeescript
+
+CONTENT_TYPES =
+  html: 'text/html'
+  css: 'text/css'
+  js: 'text/javascript'
 
 task "spec", "Serve yummy specs.", ->
   server = http.createServer (request, response) ->
@@ -92,7 +116,7 @@ task "spec", "Serve yummy specs.", ->
       ext = m[1]
     else
       ext = ""
-    path = ".#{path}"
+    path = path.substr(1)
     get_content path, (err, data) ->
       if err
         if err.errno is ENOENT
