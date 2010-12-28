@@ -16,9 +16,10 @@ particular, scroll down to the section entitled
 
 ## Build Requirements
 
-WebActors doesn't have any special run-time requirements -- it's just
-a single JavaScript file -- but it requires node.js, npm, and the
-"coffee-script" and "jsmin" npm packages for development.
+WebActors doesn't have any special run-time requirements
+-- the library is just a single JavaScript file -- but it
+requires node.js, npm, and the "coffee-script" and "jsmin"
+npm packages for development.
 
 ## Running Cake
 
@@ -45,8 +46,9 @@ mutually-shared objects.
 
 Writing concurrent programs using message-passing can take
 some getting used to, but actors can make programs simpler,
-and they are also relatively safe from many common
-programming errors.
+and they are also relatively safe from some common
+programming errors which are endemic to event-driven
+programs.
 
 ## Actors in JavaScript
 
@@ -55,6 +57,21 @@ coroutines), but in the absence of these, actors can still
 be modeled by a chain of callbacks.  Indeed, actor-based
 programming can be a good way to manage the inherent
 complexities of callback-driven programming.
+
+### Actors and the JavaScript Event Loop
+
+In WebActors, actors are implemented in a non-reentrant
+fashion.  Newly spawned actors won't run, and newly sent
+messages won't be delivered, until the currently running
+actor returns control to the event loop.
+
+Before returning control to the event loop, an actor can
+decide which messages will re-activate it by registering
+callbacks for messages matching particular patterns.  If
+an actor doesn't set itself up to receive any messages
+before returning control to the event loop, or if it
+returns control to the event loop by raising an exception,
+then that actor will terminate.
 
 ### Creating Actors and Sending Messages
 
@@ -90,6 +107,10 @@ In the above example, the actor sets up a callback to
 receive one message. That callback, in turn, doesn't set
 up any further callbacks, so the actor terminates at
 that point.
+
+If messages arrive which don't match any outstanding
+receive patterns, they will be held until the actor asks
+for them (by calling `receive` with a matching pattern).
 
 ### Saving Some Typing
 
@@ -149,8 +170,8 @@ number of properties and methods attached to it.
 ## Actors
 
 Most of the following functions in this section must be
-called from the context of an actor; the individual
-exceptions to this rule are:
+called by an actor; the individual exceptions to this
+rule are:
 
   * `WebActors.spawn`
   * `WebActors.send`
