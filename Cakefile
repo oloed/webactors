@@ -53,7 +53,7 @@ transcode_coffeescript = (path, cb) ->
           coffee_script = data.toString("utf8")
           js_script = coffee.compile(coffee_script)
         catch e
-          error_message = String(e)
+          error_message = "#{coffee_path}: #{e}"
           error_string = JSON.stringify(error_message)
           js_script = "console.error(#{error_string})"
         cb(null, new Buffer(js_script, "utf8"))
