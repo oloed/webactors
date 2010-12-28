@@ -27,8 +27,8 @@ class DeadActor
   constructor: (@actor_id) ->
 
   link: (actor_id) ->
-    actor = lookup_actor(actor_id)
-    actor.kill(@actor_id, "No such actor")
+    actor = new RemoteActor(actor_id)
+    actor.kill(@actor_id, "actor is dead or unreachable")
 
   unlink: (actor_id) ->
 
@@ -40,7 +40,7 @@ class RemoteActor
   constructor: (@actor_id) ->
 
   route: (verb, param) ->
-    WebActors._router.route_message(@actor_id, verb, param)
+    get_router().route_message(@actor_id, verb, param)
 
   link: (actor_id) ->
     @route "link", actor_id
@@ -138,25 +138,34 @@ class LocalActor
   
 next_actor_serial = 0
 actors_by_id = {}
-local_prefix = "root"
 
 alloc_actor_id = ->
-  "#{local_prefix}:#{next_actor_serial++}"
+  "#{next_actor_serial++}"
 
 lookup_actor = (actor_id) ->
-  actor = actors_by_id[actor_id]
-  return actor if actor
-  prefix = actor_id.substr(0, actor_id.lastIndexOf(":"))
-  if prefix is local_prefix
-    return new DeadActor(actor_id)
-  else
-    return new RemoteActor(actor_id)
+  actors_by_id[actor_id] or new RemoteActor(actor_id)
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor
 
 unregister_actor = (actor_id) ->
   delete actors_by_id[actor_id]
+
+router_configured = false
+get_router = ->
+  router = WebActors._router
+  if not router_configured
+    router.set_default_gateway (actor_id, verb, param) ->
+      actor = actors_by_id[actor_id] or new DeadActor(actor_id)
+      if verb is "send" or verb is "link" or verb is "unlink"
+        actor[verb](param)
+      else if verb is "kill"
+        [killer_id, reason] = param
+        actor.kill(killer_id, reason)
+      else
+        console.error("Unknown verb '#{verb}' directed at actor #{actor_id}")
+    router_configured = true
+  router
 
 spawn = (body) ->
   actor_id = alloc_actor_id()

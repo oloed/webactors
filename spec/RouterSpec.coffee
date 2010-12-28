@@ -34,7 +34,7 @@ describe "WebActors.Router", ->
     router.route_message "foobar:0", "def", null
     expect(received).toEqual([["foobar:0", "def", null]])
 
-describe "WebActors routing", ->
+describe "WebActors outbound routing", ->
   saved_router = null
   router = null
 
@@ -45,15 +45,6 @@ describe "WebActors routing", ->
 
   afterEach ->
     WebActors._router = saved_router
-
-  it "should not route messages for local actors", ->
-    received = []
-    router.register_gateway "root", (actor_id, verb, param) ->
-      received.push [actor_id, verb, param]
-    router.set_default_gateway (actor_id, verb, param) ->
-      received.push [actor_id, verb, param]
-    WebActors.send "root:0", "foobar"
-    expect(received).toEqual([])
 
   it "should route messages for other nodes", ->
     received = []
@@ -117,3 +108,76 @@ describe "WebActors routing", ->
       expect(received).toEqual([
         ["hoge:0", "link", actor_id],
         ["hoge:0", "unlink", actor_id]])
+
+describe "WebActors inbound routing", ->
+
+  afterEach ->
+    WebActors._router.unregister_gateway "blah"
+
+  it "should deliver messages to local actors", ->
+    received = []
+
+    actor_id = WebActors.spawn ->
+      WebActors.receive WebActors.$$, (message) ->
+        received.push message
+
+    WebActors._router.route_message actor_id, "send", "foobar"
+
+    waitsFor -> received.length > 0
+
+    runs ->
+      expect(received).toEqual(["foobar"])
+
+  it "should deliver link messages to local actors", ->
+    received = []
+
+    actor_id = WebActors.spawn ->
+      WebActors.receive WebActors.$_, ->
+
+    router = WebActors._router
+    router.register_gateway "blah", (actor_id, verb, param) ->
+      received.push [actor_id, verb, param]
+    router.route_message actor_id, "link", "blah:0"
+    WebActors.send actor_id, ""
+
+    waitsFor -> received.length > 0
+
+    runs ->
+      expect(received).toEqual([["blah:0", "kill", [actor_id, null]]])
+
+  it "should deliver unlink messages to local actors", ->
+    received = []
+
+    actor_id = WebActors.spawn ->
+      WebActors.receive WebActors.$_, ->
+
+    router = WebActors._router
+    router.register_gateway "blah", (actor_id, verb, param) ->
+      received.push [actor_id, verb, param]
+    router.route_message actor_id, "link", "blah:0"
+    router.route_message actor_id, "unlink", "blah:0"
+    WebActors.send actor_id, ""
+
+    setTimeout((-> received.push "passed"), 1000)
+
+    waitsFor -> received.length > 0
+
+    runs ->
+      expect(received).toEqual(["passed"])
+
+  it "should deliver kill messages to local actors", ->
+    received = []
+
+    actor_id = WebActors.spawn ->
+      WebActors.receive WebActors.$_, ->
+
+    router = WebActors._router
+    router.register_gateway "blah", (actor_id, verb, param) ->
+      received.push [actor_id, verb, param]
+    router.route_message actor_id, "link", "blah:0"
+    router.route_message actor_id, "kill", ["blah:1", "foobar"]
+
+    waitsFor -> received.length > 0
+
+    runs ->
+      expect(received).toEqual([["blah:0", "kill", [actor_id, "foobar"]]])

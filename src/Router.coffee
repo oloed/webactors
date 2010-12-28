@@ -28,4 +28,6 @@ class Router
     @default_gateway = callback
     undefined
 
+@WebActors._router = new Router()
+
 @WebActors.Router = Router
