@@ -81,7 +81,7 @@ task "spec", "Serve yummy specs.", ->
     if request.method isnt "HEAD" and request.method isnt "GET"
       headers =
         'Content-Type': 'text/plain'
-        'Accept': 'GET, HEAD'
+        'Allow': 'GET, HEAD'
       response.writeHead(405, headers)
       response.write("405 Method Not Allowed\n")
       response.end()
