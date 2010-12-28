@@ -53,7 +53,7 @@ transcode_webactors_js = (path, cb) ->
     return cb(err, null)
   try
     src = compile_webactors_js()
-    return cb(null, src)
+    return cb(null, new Buffer(src, "utf8"))
   catch e
     cb(e, null)
 
@@ -61,21 +61,20 @@ transcode_coffeescript = (path, cb) ->
   idx = path.search(/\.js$/)
   if idx is -1
     err = errnoException(ENOENT, path)
-    cb(err, null)
-  else
-    coffee_path = "#{path.substr(0, idx)}.coffee"
-    read_file_content coffee_path, (err, data) ->
-      if err
-        cb(err, null)
-      else
-        try
-          coffee_script = data.toString("utf8")
-          js_script = coffee.compile(coffee_script)
-        catch e
-          error_message = "#{coffee_path}: #{e}"
-          error_string = JSON.stringify(error_message)
-          js_script = "console.error(#{error_string})"
-        cb(null, new Buffer(js_script, "utf8"))
+    return cb(err, null)
+  coffee_path = "#{path.substr(0, idx)}.coffee"
+  read_file_content coffee_path, (err, data) ->
+    if err
+      cb(err, null)
+    else
+      try
+        coffee_script = data.toString("utf8")
+        js_script = coffee.compile(coffee_script)
+      catch e
+        error_message = "#{coffee_path}: #{e}"
+        error_string = JSON.stringify(error_message)
+        js_script = "console.error(#{error_string})"
+      cb(null, new Buffer(js_script, "utf8"))
 
 compose_two_content_sources = (a, b) ->
   (path, cb) ->
