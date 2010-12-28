@@ -26,7 +26,7 @@ npm packages for development.
 Running `cake spec` will start a local webserver and print
 a URL which can be used to run the Jasmine specs.  On most
 Linux systems (anything that has xdg-open), it will also
-open a browser window.
+open a browser window and run the specs.
 
 ## Building
 
