@@ -28,7 +28,7 @@ compile_webactors_js = ->
       coffee.compile(data)
     catch e
       e.message = "#{src}: #{e.message}"
-      raise e
+      throw e
   compiled.join("\n")
 
 task "build", "Build delectable files.", ->
