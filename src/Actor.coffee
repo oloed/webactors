@@ -33,6 +33,7 @@ class DeadActor
   unlink: (actor_id) ->
 
   send: (message) ->
+    WebActors._report_actor_error("Discarding message to actor #{@actor_id}")
 
   kill: (killer_id, reason) ->
 
@@ -118,7 +119,8 @@ class LocalActor
       try
         cont.apply(actor.state, args)
       catch e
-        console.error(String(e))
+        message = "Actor #{actor.actor_id}: #{e}"
+        WebActors._report_actor_error(message)
         actor.clauses = null
         reason = e
       finally
@@ -137,10 +139,14 @@ class LocalActor
           actor.shutdown(reason)
   
 next_actor_serial = 0
+local_prefix_string = ""
 actors_by_id = {}
 
+set_local_prefix = (prefix) ->
+  local_prefix_string = "#{prefix}:"
+
 alloc_actor_id = ->
-  "#{next_actor_serial++}"
+  "#{local_prefix_string}#{next_actor_serial++}"
 
 lookup_actor = (actor_id) ->
   actors_by_id[actor_id] or new RemoteActor(actor_id)
@@ -209,10 +215,15 @@ unlink = (actor_id) ->
   actor = lookup_actor(actor_id)
   actor.unlink(current_actor.actor_id)
 
-sendback = (curried_args...) ->
-  actor_id = self()
+_sendback = (actor_id, curried_args) ->
   (callback_args...) ->
     send actor_id, curried_args.concat(callback_args)
+
+sendback = (curried_args...) ->
+  _sendback(self(), curried_args)
+
+sendback_to = (actor_id, curried_args...) ->
+  _sendback(actor_id, curried_args)
 
 @WebActors.spawn = spawn
 @WebActors.spawn_linked = spawn_linked
@@ -225,3 +236,6 @@ sendback = (curried_args...) ->
 @WebActors.link = link
 @WebActors.unlink = unlink
 @WebActors.sendback = sendback
+@WebActors.sendback_to = sendback_to
+@WebActors._set_local_prefix = set_local_prefix
+@WebActors._report_actor_error = (message) -> console.error(message)
