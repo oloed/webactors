@@ -57,10 +57,10 @@ class RemoteActor
 
 class LocalActor
   constructor: (@actor_id) ->
-    @mailbox = new WebActors.Mailbox()
+    @mailbox = []
     @killed = false
     @state = {}
-    @clauses = null
+    @clauses = []
     @kill_handler = null
     @linked = {}
 
@@ -70,8 +70,18 @@ class LocalActor
   unlink: (actor_id) ->
     delete @linked[actor_id]
 
+  _consume_message: (message) ->
+    for [pattern, cont] in @clauses
+      captured = WebActors.match(pattern, message)
+      if captured
+        @clauses = []
+        setTimeout(@wrap_cont(cont, captured), 0)
+        return true
+    return false
+
   send: (message) ->
-    @mailbox.postMessage(message)
+    unless @_consume_message(message)
+      @mailbox.push(message)
 
   kill: (killer_id, reason) ->
     if @kill_handler
@@ -90,10 +100,8 @@ class LocalActor
     @kill_handler = handler
 
   receive: (pattern, cont) ->
-    clause = [pattern, cont]
-    if not @clauses
-      @clauses = [clause]
-    else
+    unless @killed
+      clause = [pattern, cont]
       @clauses.push clause
 
   start: (body) ->
@@ -102,6 +110,7 @@ class LocalActor
 
   shutdown: (reason) ->
     @killed = true
+    @clauses = []
     unregister_actor @actor_id
     linked = @linked
     @linked = null
@@ -112,7 +121,6 @@ class LocalActor
   wrap_cont: (cont, args) ->
     actor = this
     -> 
-      actor.clauses = null
       return if actor.killed
       reason = null
       current_actor = actor
@@ -121,22 +129,16 @@ class LocalActor
       catch e
         message = "Actor #{actor.actor_id}: #{e}"
         WebActors._report_actor_error(message)
-        actor.clauses = null
         reason = e
       finally
         current_actor = NULL_ACTOR
-        if actor.killed
-          actor.clauses = null
-          return
-        if actor.clauses
-          actor.mailbox.consumeOnce (message) ->
-            for [pattern, cont] in actor.clauses
-              captured = WebActors.match(pattern, message)
-              if captured
-                return actor.wrap_cont(cont, captured)
-            return null
-        else
-          actor.shutdown(reason)
+        unless actor.killed
+          if actor.clauses.length > 0
+            for index in [0...actor.mailbox.length]
+              if actor._consume_message(actor.mailbox[index])
+                actor.mailbox.splice(index, 1)
+          else
+            actor.shutdown(reason)
   
 next_actor_serial = 0
 local_prefix_string = ""
