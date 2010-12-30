@@ -88,7 +88,7 @@ in the new actor's context, and returns an id representing
 the newly created actor.  This id can be used to submit
 messages to the new actor's mailbox.
 
-    var actor = WebActors.spawn(a_callback); // create an actor
+    var actor = WebActors.spawn(aCallback); // create an actor
     WebActors.send(actor, "a message"); // send it a message
 
 ### Receiving Messages
@@ -97,7 +97,7 @@ To receive messages, use the `WebActors.receive`
 function.  It takes a pattern and a callback to be invoked
 when a matching message is received.
 
-    function a_callback() {
+    function aCallback() {
       // $VAR matches anything
       WebActors.receive(WebActors.$VAR, function (message) {
         alert(message);
@@ -160,14 +160,14 @@ aliases for functions defined on library objects.
     var send = WebActors.send;
     var $VAR = WebActors.$VAR;
 
-    function a_callback() {
+    function aCallback() {
       // $VAR matches anything
       receive($VAR, function (message) {
         alert(message);
       });
     }
 
-    actor = spawn(a_callback); // create an actor
+    actor = spawn(aCallback); // create an actor
     send(actor, "a message"); // send it a message
 
     })();
@@ -235,7 +235,7 @@ rule are:
   * `WebActors.send`
   * `WebActors.kill`
 
-### WebActors.spawn(body) -> actor_id
+### WebActors.spawn(body) -> actorId
 
 The `spawn` method spawns a new actor, returning
 its id.
@@ -246,9 +246,9 @@ unless `body` suspends the actor by calling
 
 `spawn` may be called outside an actor.
 
-### WebActors.spawn_linked(body) -> actor_id
+### WebActors.spawnLinked(body) -> actorId
 
-The `spawn_linked` method is similar to
+The `spawnLinked` method is similar to
 `spawn`, except that it atomically links the
 spawned actor with the current actor.
 
@@ -257,7 +257,7 @@ spawned actor with the current actor.
 The `self` method returns the id of the current
 actor.
 
-### WebActors.send(actor_id, message)
+### WebActors.send(actorId, message)
 
 Sends a message to another actor asynchronously. The
 message is put in the receiving actor's mailbox, to
@@ -266,7 +266,7 @@ doesn't exist, `send` has no effect.
 
 `send` may be called outside an actor.
 
-### WebActors.send_self(message)
+### WebActors.sendSelf(message)
 
 Like `send`, but sends a message to the current
 actor's mailbox.  Equivalent to
@@ -288,7 +288,7 @@ If an actor doesn't establish any receives before
 returning to the event loop, or if it raises an
 uncaught exception, the actor will terminate.
 
-### WebActors.link(actor_id)
+### WebActors.link(actorId)
 
 The `link` method links the current actor with
 the given actor, provided there wasn't already an existing
@@ -297,7 +297,7 @@ link between them.
 If the specified actor doesn't exist, then `link` will
 kill the current actor.
 
-### WebActors.unlink(actor_id)
+### WebActors.unlink(actorId)
 
 The `unlink` method unlinks the current actor
 from the given actor, if there was an existing link between
@@ -306,7 +306,7 @@ the two.
 `unlink` has no effect if the specified actor doesn't
 exist.
 
-### WebActors.kill(recipient_id, reason)
+### WebActors.kill(recipientId, reason)
 
 The `kill` method kills the given actor whether or not it
 is linked with the current actor.  It has no effect if the
@@ -314,10 +314,10 @@ specified actor doesn't exist.
 
 `kill` may be called outside an actor.
 
-### WebActors.trap_kill(function (killer_id, reason) {...})
+### WebActors.trapKill(function (killerId, reason) {...})
 
 Normally, when an actor receives a kill, it will immediately
-exit.  `trap_kill` allows for more nuanced behavior
+exit.  `trapKill` allows for more nuanced behavior
 than the default.
 
 This passed-in function receives two arguments: the id of
@@ -328,7 +328,7 @@ die with that exception.
 Note that the callback does NOT run in the context of an
 actor, so functions like `receive` should not be used.
 
-Typically, `sendback` is used with `trap_kill` to redirect
+Typically, `sendback` is used with `trapKill` to redirect
 the kill to the actor's mailbox as a regular message.
 
 ### WebActors.sendback(args...) -> cb
@@ -339,6 +339,11 @@ that constructed it.  Useful for waiting with setTimeout.
 The message sent will consist of the arguments to
 `sendback` concatented with any arguments passed
 to the callback when it is called.
+
+### WebActors.sendbackTo(actorId, args...) -> cb
+
+Like `sendback`, but creates a callback which sends
+a message to an actor other than the current one.
 
 ## Pattern Matching
 

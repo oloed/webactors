@@ -53,7 +53,7 @@ describe "A WebActors Actor", ->
     completed = false
 
     WebActors.spawn ->
-      WebActors.send_self "foo"
+      WebActors.sendSelf "foo"
       WebActors.receive "foo", -> completed = true
     
     waitsFor -> completed
@@ -62,7 +62,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
 
       WebActors.receive $VAR, (m) ->
         received.push m
@@ -78,7 +78,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
 
       WebActors.receive $VAR, (m) ->
         received.push m
@@ -94,7 +94,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
       WebActors.receive $VAR, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
@@ -128,13 +128,13 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
       WebActors.receive "go", ->
         WebActors.kill actor_b_id, "testing"
         WebActors.receive $VAR, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
-      WebActors.trap_kill (killer_id, reason) -> throw "error"
+      WebActors.trapKill (killer_id, reason) -> throw "error"
       WebActors.link actor_a_id
       WebActors.send actor_a_id, "go"
       WebActors.receive "never happen", ->
@@ -147,7 +147,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
       actor_a_id = "root:foo"
       WebActors.link actor_a_id
       WebActors.receive [actor_a_id, ANY], -> passed = true
@@ -158,9 +158,9 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
 
-      actor_a_id = WebActors.spawn_linked ->
+      actor_a_id = WebActors.spawnLinked ->
         WebActors.receive ANY, ->
 
       actor_b_id = WebActors.spawn ->
@@ -176,7 +176,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
         throw "foo"
@@ -188,7 +188,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
 
       actor_a_id = WebActors.spawn ->
         WebActors.link root_id
@@ -212,9 +212,9 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
 
-      actor_a_id = WebActors.spawn_linked ->
+      actor_a_id = WebActors.spawnLinked ->
         WebActors.send root_id, "go"
       
       WebActors.receive "go", ->
@@ -228,7 +228,7 @@ describe "A WebActors Actor", ->
 
     WebActors.spawn ->
       cb = WebActors.sendback("foo")
-      WebActors.send_self "bar"
+      WebActors.sendSelf "bar"
       WebActors.receive "bar", ->
         cb("baz", 1, 2)
         WebActors.receive ["foo", "baz", 1, 2], -> passed = true
@@ -236,14 +236,14 @@ describe "A WebActors Actor", ->
 
     waitsFor -> passed
 
-  it "should kill actor if trap_kill raises", ->
+  it "should kill actor if trapKill raises", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
 
-      actor_a_id = WebActors.spawn_linked ->
-        WebActors.trap_kill (killer_id, reason) -> throw "foobar"
+      actor_a_id = WebActors.spawnLinked ->
+        WebActors.trapKill (killer_id, reason) -> throw "foobar"
 
         WebActors.send root_id, "go"
 
@@ -261,7 +261,7 @@ describe "A WebActors Actor", ->
     passed = false
 
     root_id = WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
       ready = true
       WebActors.receive [null, "foobar"], ->
         passed = true
@@ -278,9 +278,9 @@ describe "A WebActors Actor", ->
     body_run = false
 
     WebActors.spawn ->
-      WebActors.trap_kill WebActors.sendback()
+      WebActors.trapKill WebActors.sendback()
 
-      actor_a_id = WebActors.spawn_linked ->
+      actor_a_id = WebActors.spawnLinked ->
         body_run = true
 
       WebActors.kill actor_a_id, "foobar"
@@ -295,15 +295,15 @@ describe "A WebActors Actor", ->
       expect(got_kill).toBeTruthy()
       expect(body_run).toBeFalsy()
 
-  it "should run trap_kill callbacks outside of actors", ->
+  it "should run trapKill callbacks outside of actors", ->
     actor_id = undefined
 
     WebActors.spawn ->
-      WebActors.trap_kill (killer_id, reason) ->
+      WebActors.trapKill (killer_id, reason) ->
         actor_id = WebActors.self()
         throw reason
 
-      WebActors.spawn_linked ->
+      WebActors.spawnLinked ->
 
       WebActors.receive ANY, ->
 

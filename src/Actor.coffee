@@ -14,7 +14,7 @@ class NullActor
 
   kill: (killer_id, reason) ->
 
-  trap_kill: (handler) ->
+  trapKill: (handler) ->
     throw "No current actor"
 
   receive: (pattern, cont) ->
@@ -96,7 +96,7 @@ class LocalActor
     else
       @shutdown(reason)
 
-  trap_kill: (handler) ->
+  trapKill: (handler) ->
     @kill_handler = handler
 
   receive: (pattern, cont) ->
@@ -181,7 +181,7 @@ spawn = (body) ->
   actor.start(body)
   actor_id
 
-spawn_linked = (body) ->
+spawnLinked = (body) ->
   actor_id = spawn body
   link actor_id
   actor_id
@@ -197,11 +197,11 @@ receive = (pattern, cont) ->
 self = ->
   current_actor.actor_id
 
-send_self = (message) ->
+sendSelf = (message) ->
   send current_actor.actor_id, message
 
-trap_kill = (handler) ->
-  current_actor.trap_kill handler
+trapKill = (handler) ->
+  current_actor.trapKill handler
 
 kill = (actor_id, reason) ->
   actor = lookup_actor(actor_id)
@@ -224,20 +224,20 @@ _sendback = (actor_id, curried_args) ->
 sendback = (curried_args...) ->
   _sendback(self(), curried_args)
 
-sendback_to = (actor_id, curried_args...) ->
+sendbackTo = (actor_id, curried_args...) ->
   _sendback(actor_id, curried_args)
 
 @WebActors.spawn = spawn
-@WebActors.spawn_linked = spawn_linked
+@WebActors.spawnLinked = spawnLinked
 @WebActors.send = send
 @WebActors.receive = receive
 @WebActors.self = self
-@WebActors.send_self = send_self
-@WebActors.trap_kill = trap_kill
+@WebActors.sendSelf = sendSelf
+@WebActors.trapKill = trapKill
 @WebActors.kill = kill
 @WebActors.link = link
 @WebActors.unlink = unlink
 @WebActors.sendback = sendback
-@WebActors.sendback_to = sendback_to
+@WebActors.sendbackTo = sendbackTo
 @WebActors._set_local_prefix = set_local_prefix
 @WebActors._report_actor_error = (message) -> console.error(message)
