@@ -8,7 +8,7 @@ class CapturingPattern
     captured.push value if captured
     return captured
 
-capture = (body) ->
+$var = (body) ->
   new CapturingPattern(body)
 
 any = ->
@@ -29,7 +29,7 @@ match = (pattern, value, captured) ->
       for name of pattern
         captured = match(pattern[name], value[name], captured)
         break if captured is null
-  else if pattern is capture
+  else if pattern is $var
     # match anything and capture
     captured.push value
   else if pattern is any
@@ -42,8 +42,5 @@ match = (pattern, value, captured) ->
 @WebActors.match = (pattern, value) ->
   match pattern, value, []
 
-@WebActors.capture = capture
-@WebActors.$$ = capture
-
+@WebActors.$var = $var
 @WebActors.any = any
-@WebActors.$_ = any

@@ -98,8 +98,8 @@ function.  It takes a pattern and a callback to be invoked
 when a matching message is received.
 
     function a_callback() {
-      // $$ matches anything
-      WebActors.receive(WebActors.$$, function (message) {
+      // $var matches anything
+      WebActors.receive(WebActors.$var, function (message) {
         alert(message);
       });
     }
@@ -129,11 +129,11 @@ aliases for functions defined on library objects.
     var spawn = WebActors.spawn;
     var receive = WebActors.receive;
     var send = WebActors.send;
-    var $$ = WebActors.$$;
+    var $var = WebActors.$var;
 
     function a_callback() {
-      // $$ matches anything
-      receive($$, function (message) {
+      // $var matches anything
+      receive($var, function (message) {
         alert(message);
       });
     }
@@ -323,15 +323,17 @@ JavaScript values. It takes a pattern and a value,
 returning an array of captured subvalues if the match is
 successful, or `null` otherwise.
 
-### WebActors.any or WebActors.$_
+### WebActors.any
 
-When used in a pattern, `$_` matches any value
+When used in a pattern, `any` matches any value
 without capturing it.
 
-### WebActors.capture or WebActors.$$
+### WebActors.$var
 
-When used in a pattern, `$$` matches and captures any
-value; the match may be further constrained by passing
-an argument to `$$` as a function.  That is, `$$` will
-match anything, whereas `$$(foo)` will only match `foo`
-(where `foo` is a pattern).
+When used in a pattern, `$var` matches any value and
+includes it in the list of captured values returned
+by `WebActors.match`.  The match may be further
+constrained by passing an argument to `$var` as a
+function.  That is, `$var` will match anything, whereas
+`$var(foo)` will only match `foo` (where `foo`
+is a pattern).
