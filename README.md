@@ -119,6 +119,34 @@ If messages arrive which don't match any outstanding
 receive patterns, they will be held until the actor asks
 for them (by calling `receive` with a matching pattern).
 
+### Patterns
+
+The first argument to `receive` is a pattern which is used
+to match an incoming message and extract values from it.
+In case of a match, values are passed as arguments to the
+callback.
+
+The simplest possible pattern is `WebActors.ANY`, which
+matches anything without extracting any values from it.
+
+The second simplest pattern is `WebActors.$VAR`, which
+also matches anything, but additionally extracts the value
+as a parameter for the callback.  Most of our examples
+use this.
+
+When a message is an array, pattern matching can also
+be used to extract individual array elements; for example:
+
+    WebActors.receive ["foo", WebActors.$VAR, WebActors.$VAR], -> (a, b)
+
+Will match three-element arrays whose first element is "foo",
+and pass the remaining two elements as arguments to the callback.
+
+If you want to, you can use WebActors pattern matching
+directly in your own non-actor code by using `WebActors.match`.
+`match` takes a pattern and a value, and returns a list of
+captured values in case of a match, `null` otherwise.
+
 ### Saving Some Typing
 
 If you aren't already in the habit of doing so, it can
