@@ -134,10 +134,11 @@ also matches anything, but additionally extracts the value
 as a parameter for the callback.  Most of our examples
 use this.
 
-When a message is an array, pattern matching can also
-be used to extract individual array elements; for example:
+Patterns can also be ordinary JavaScript values.  When a
+message is an array, pattern matching can also be performed
+on individual array elements; for example:
 
-    WebActors.receive ["foo", WebActors.$VAR, WebActors.$VAR], -> (a, b)
+    WebActors.receive ["foo", WebActors.$VAR, WebActors.$VAR], (a, b) ->
 
 Will match three-element arrays whose first element is "foo",
 and pass the remaining two elements as arguments to the callback.
