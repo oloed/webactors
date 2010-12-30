@@ -118,7 +118,7 @@ describe "WebActors inbound routing", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive WebActors.$var, (message) ->
+      WebActors.receive WebActors.$VAR, (message) ->
         received.push message
 
     WebActors._router.route_message actor_id, "send", "foobar"
@@ -132,7 +132,7 @@ describe "WebActors inbound routing", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive WebActors.any, ->
+      WebActors.receive WebActors.ANY, ->
 
     router = WebActors._router
     router.register_gateway "blah", (actor_id, verb, param) ->
@@ -149,7 +149,7 @@ describe "WebActors inbound routing", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive WebActors.any, ->
+      WebActors.receive WebActors.ANY, ->
 
     router = WebActors._router
     router.register_gateway "blah", (actor_id, verb, param) ->
@@ -169,7 +169,7 @@ describe "WebActors inbound routing", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive WebActors.any, ->
+      WebActors.receive WebActors.ANY, ->
 
     router = WebActors._router
     router.register_gateway "blah", (actor_id, verb, param) ->

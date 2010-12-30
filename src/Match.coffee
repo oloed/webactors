@@ -8,10 +8,10 @@ class CapturingPattern
     captured.push value if captured
     return captured
 
-$var = (body) ->
+$VAR = (body) ->
   new CapturingPattern(body)
 
-any = ->
+ANY = ->
 
 match = (pattern, value, captured) ->
   if typeof(pattern) is "object"
@@ -29,10 +29,10 @@ match = (pattern, value, captured) ->
       for name of pattern
         captured = match(pattern[name], value[name], captured)
         break if captured is null
-  else if pattern is $var
+  else if pattern is $VAR
     # match anything and capture
     captured.push value
-  else if pattern is any
+  else if pattern is ANY
     jasmine.log(value)
     # match anything
   else
@@ -42,5 +42,5 @@ match = (pattern, value, captured) ->
 @WebActors.match = (pattern, value) ->
   match pattern, value, []
 
-@WebActors.$var = $var
-@WebActors.any = any
+@WebActors.$VAR = $VAR
+@WebActors.ANY = ANY

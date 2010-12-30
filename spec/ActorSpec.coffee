@@ -1,6 +1,6 @@
 describe "A WebActors Actor", ->
-  $var = WebActors.$var
-  any = WebActors.any
+  $VAR = WebActors.$VAR
+  ANY = WebActors.ANY
 
   it "should have a unique ID", ->
     actor_id_a = WebActors.spawn ->
@@ -20,7 +20,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive $var, (m) -> received.push(m)
+      WebActors.receive $VAR, (m) -> received.push(m)
 
     WebActors.send actor_id, expected
 
@@ -32,13 +32,13 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive $var("foo"), (m) ->
+      WebActors.receive $VAR("foo"), (m) ->
         received.push(m)
-        WebActors.receive $var("baz"), (m) ->
+        WebActors.receive $VAR("baz"), (m) ->
           received.push(m)
-      WebActors.receive $var("bar"), (m) ->
+      WebActors.receive $VAR("bar"), (m) ->
         received.push(m)
-        WebActors.receive $var("baz"), (m) ->
+        WebActors.receive $VAR("baz"), (m) ->
           received.push(m)
 
     WebActors.send actor_id, "bar"
@@ -64,7 +64,7 @@ describe "A WebActors Actor", ->
     actor_a_id = WebActors.spawn ->
       WebActors.trap_kill WebActors.sendback()
 
-      WebActors.receive $var, (m) ->
+      WebActors.receive $VAR, (m) ->
         received.push m
 
     actor_b_id = WebActors.spawn ->
@@ -80,7 +80,7 @@ describe "A WebActors Actor", ->
     actor_a_id = WebActors.spawn ->
       WebActors.trap_kill WebActors.sendback()
 
-      WebActors.receive $var, (m) ->
+      WebActors.receive $VAR, (m) ->
         received.push m
 
     actor_b_id = WebActors.spawn ->
@@ -95,11 +95,11 @@ describe "A WebActors Actor", ->
 
     actor_a_id = WebActors.spawn ->
       WebActors.trap_kill WebActors.sendback()
-      WebActors.receive $var, (m) -> received.push m
+      WebActors.receive $VAR, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
       WebActors.link actor_a_id
-      WebActors.receive any, ->
+      WebActors.receive ANY, ->
 
     actor_c_id = WebActors.spawn ->
       WebActors.kill actor_b_id, "foobar"
@@ -112,7 +112,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.receive $var, (m) -> received.push m
+      WebActors.receive $VAR, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
       WebActors.kill actor_a_id, "foobar"
@@ -131,7 +131,7 @@ describe "A WebActors Actor", ->
       WebActors.trap_kill WebActors.sendback()
       WebActors.receive "go", ->
         WebActors.kill actor_b_id, "testing"
-        WebActors.receive $var, (m) -> received.push m
+        WebActors.receive $VAR, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
       WebActors.trap_kill (killer_id, reason) -> throw "error"
@@ -150,7 +150,7 @@ describe "A WebActors Actor", ->
       WebActors.trap_kill WebActors.sendback()
       actor_a_id = "root:foo"
       WebActors.link actor_a_id
-      WebActors.receive [actor_a_id, any], -> passed = true
+      WebActors.receive [actor_a_id, ANY], -> passed = true
 
     waitsFor -> passed
 
@@ -161,14 +161,14 @@ describe "A WebActors Actor", ->
       WebActors.trap_kill WebActors.sendback()
 
       actor_a_id = WebActors.spawn_linked ->
-        WebActors.receive any, ->
+        WebActors.receive ANY, ->
 
       actor_b_id = WebActors.spawn ->
         WebActors.link actor_a_id
 
-      WebActors.receive [actor_a_id, any], ->
+      WebActors.receive [actor_a_id, ANY], ->
         WebActors.link actor_b_id
-        WebActors.receive [actor_b_id, any], -> passed = true
+        WebActors.receive [actor_b_id, ANY], -> passed = true
 
     waitsFor -> passed
 
@@ -195,7 +195,7 @@ describe "A WebActors Actor", ->
         WebActors.receive "go", ->
           WebActors.unlink actor_b_id
           WebActors.send actor_b_id, "go"
-          WebActors.receive $var, ->
+          WebActors.receive $VAR, ->
 
       actor_b_id = WebActors.spawn ->
         WebActors.link actor_a_id
@@ -204,7 +204,7 @@ describe "A WebActors Actor", ->
       
       setTimeout((-> WebActors.send root_id, "watchdog"), 100)
       WebActors.receive "watchdog", -> passed = true
-      WebActors.receive $var, ->
+      WebActors.receive $VAR, ->
 
     waitsFor -> passed
 
@@ -219,7 +219,7 @@ describe "A WebActors Actor", ->
       
       WebActors.receive "go", ->
         WebActors.receive [actor_a_id, null], -> passed = true
-      WebActors.receive $var, ->
+      WebActors.receive $VAR, ->
 
     waitsFor -> passed
 
@@ -232,7 +232,7 @@ describe "A WebActors Actor", ->
       WebActors.receive "bar", ->
         cb("baz", 1, 2)
         WebActors.receive ["foo", "baz", 1, 2], -> passed = true
-      WebActors.receive any, ->
+      WebActors.receive ANY, ->
 
     waitsFor -> passed
 
@@ -247,7 +247,7 @@ describe "A WebActors Actor", ->
 
         WebActors.send root_id, "go"
 
-        WebActors.receive any, ->
+        WebActors.receive ANY, ->
 
       WebActors.receive "go", ->
         WebActors.kill actor_a_id, "hoge"
@@ -305,6 +305,6 @@ describe "A WebActors Actor", ->
 
       WebActors.spawn_linked ->
 
-      WebActors.receive any, ->
+      WebActors.receive ANY, ->
 
     waitsFor -> actor_id is null
