@@ -20,3 +20,20 @@ describe "WebActors.spawnWorker", ->
         done = true
 
     waitsFor -> done
+
+describe "Workers", ->
+  it "should handle array messages", ->
+    done = false
+
+    WebActors.spawn ->
+      worker_id = spawn_helper 'spawnWorker', ->
+        WebActors.receive [WebActors.$VAR], (reply_id) ->
+          WebActors.send reply_id, "it works!"
+
+      WebActors.send worker_id, [WebActors.self()]
+
+      WebActors.receive WebActors.$VAR, (result) ->
+        expect(result).toEqual("it works!")
+        done = true
+
+    waitsFor -> done

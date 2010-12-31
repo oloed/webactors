@@ -13,10 +13,24 @@ $VAR = (body) ->
 
 ANY = ->
 
+empty_func = ->
+
+is_array = (value) ->
+  return true if value instanceof Array
+  if typeof(value) is "object"
+    # fallback necessary for arrays passed to workers (in Chrome)
+    try
+      empty_func.apply(this, value)
+      true
+    catch e
+      false
+  else
+    false
+
 match = (pattern, value, captured) ->
   if typeof(pattern) is "object"
     if pattern instanceof Array
-      return null unless value instanceof Array
+      return null unless is_array(value)
       pattern_length = pattern.length
       return null unless value.length is pattern_length
       for i in [0...pattern_length]
