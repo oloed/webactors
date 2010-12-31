@@ -308,3 +308,68 @@ describe "A WebActors Actor", ->
       WebActors.receive ANY, ->
 
     waitsFor -> actor_id is null
+
+describe "WebActors.injectEvent", ->
+  it "should inject message events", ->
+    received = []
+
+    actor_id = WebActors.spawn ->
+      WebActors.receive WebActors.$VAR, (message) ->
+        received.push(message)
+
+    WebActors.injectEvent actor_id, "send", "foobar"
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual(["foobar"])
+
+  it "should inject link events", ->
+    received = []
+
+    actor_a_id = WebActors.spawn ->
+      WebActors.trapKill WebActors.sendback("blah")
+      WebActors.receive WebActors.$VAR, (message) ->
+        received.push(message)
+
+    actor_b_id = WebActors.spawn ->
+      WebActors.injectEvent actor_b_id, "link", actor_a_id
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual([["blah", actor_b_id, null]])
+
+  it "should inject unlink events", ->
+    received = []
+
+    actor_a_id = WebActors.spawn ->
+      WebActors.trapKill WebActors.sendback("blah")
+      WebActors.receive WebActors.$VAR, (message) ->
+        received.push(message)
+
+    actor_b_id = WebActors.spawn ->
+      WebActors.link actor_a_id
+      WebActors.injectEvent actor_b_id, "unlink", actor_a_id
+
+    setTimeout((-> WebActors.send(actor_a_id, "passed")), 0.5)
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual(["passed"])
+
+  it "should inject kill events", ->
+    received = []
+    ready = false
+
+    actor_id = WebActors.spawn ->
+      WebActors.trapKill WebActors.sendback("blah")
+      ready = true
+      WebActors.receive WebActors.$VAR, (message) ->
+        received.push(message)
+
+    waitsFor -> ready
+
+    runs -> WebActors.injectEvent actor_id, "kill", "foobar", "baz"
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual([["blah", "foobar", "baz"]])
