@@ -448,3 +448,25 @@ describe "WebActors routing", ->
 
     runs -> expect(received).toEqual([["foo:0", "link", actor_id],
                                       ["foo:0", "unlink", actor_id]])
+
+describe "WebActors.getLocalPrefix", ->
+  it "should return the prefix being used for local actors", ->
+    actor_id = WebActors.spawn ->
+    local_prefix = WebActors.getLocalPrefix()
+    local_prefix = "#{local_prefix}:"
+    expect(actor_id.substr(0, local_prefix.length)).toEqual(local_prefix)
+
+describe "WebActors.allocateChildPrefix", ->
+  it "should return a prefix based on a key and the local prefix", ->
+    key = "zorg"
+    local_prefix = WebActors.getLocalPrefix()
+    local_prefix = "#{local_prefix}:"
+    child_prefix = WebActors.allocateChildPrefix(key)
+    expect(child_prefix.substr(0, local_prefix.length)).toEqual(local_prefix)
+    expect(child_prefix.indexOf(key)).toBeGreaterThan(local_prefix.length-1)
+
+  it "should return locally-unique prefixes", ->
+    key = "zorg"
+    child_prefix_a = WebActors.allocateChildPrefix(key)
+    child_prefix_b = WebActors.allocateChildPrefix(key)
+    expect(child_prefix_a).toNotEqual(child_prefix_b)

@@ -139,10 +139,16 @@ class ForwardingActor
 
 next_actor_serial = 0
 actors_by_id = {}
+local_prefix = "actor:"
 gateways_by_prefix = {}
 
+getLocalPrefix = -> local_prefix.substr(0, local_prefix.length-1)
+
 alloc_actor_id = ->
-  String(next_actor_serial++)
+  "#{local_prefix}#{next_actor_serial++}"
+
+allocateChildPrefix = (key) ->
+  "#{local_prefix}#{key}#{next_actor_serial++}"
 
 lookup_actor = (actor_id) ->
   actor = actors_by_id[actor_id]
@@ -252,3 +258,5 @@ injectEvent = (actor_id, verb, args...) ->
 @WebActors.injectEvent = injectEvent
 @WebActors.registerGateway = registerGateway
 @WebActors.unregisterGateway = unregisterGateway
+@WebActors.getLocalPrefix = getLocalPrefix
+@WebActors.allocateChildPrefix = allocateChildPrefix
