@@ -47,8 +47,8 @@ prohibit_bad_paths = (path, cb) ->
 read_file_content = (path, cb) ->
   fs.readFile path, cb
 
-transcode_webactors_js = (path, cb) ->
-  if path isnt "dist/webactors.js"
+serve_webactors_js = (path, cb) ->
+  if path isnt "lib/webactors.js"
     err = errnoException(ENOENT, path)
     cb(err, null)
     return
@@ -99,7 +99,7 @@ compose_content_sources = (composed, remaining...) ->
   composed
 
 get_content = compose_content_sources prohibit_bad_paths,
-                                      transcode_webactors_js,
+                                      serve_webactors_js,
                                       read_file_content,
                                       transcode_coffeescript
 
