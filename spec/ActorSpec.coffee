@@ -449,12 +449,66 @@ describe "WebActors routing", ->
     runs -> expect(received).toEqual([["foo:0", "link", actor_id],
                                       ["foo:0", "unlink", actor_id]])
 
+describe "WebActors.setDefaultGateway", ->
+  afterEach ->
+    WebActors.setDefaultGateway null
+    WebActors.unregisterGateway "foo"
+
+  it "should affect routing for unknown prefixes", ->
+    received = []
+
+    WebActors.registerGateway "foo", (args...) ->
+      received.push ["gateway"].concat(args)
+    WebActors.setDefaultGateway (args...) ->
+      received.push ["default"].concat(args)
+
+    WebActors.send "#{WebActors.getLocalPrefix()}:bogus", "abc"
+    WebActors.send "foo:0", "def"
+    WebActors.send "bar:0", "ghi"
+
+    waitsFor -> received.length > 1
+
+    runs ->
+      expect(received).toEqual([["gateway", "foo:0", "send", "def"],
+                                ["default", "bar:0", "send", "ghi"]])
+
+  it "should restore default behavior when null is passed", ->
+    WebActors.setDefaultGateway (args...) ->
+    WebActors.setDefaultGateway null
+
+    passed = false
+
+    WebActors.spawn ->
+      WebActors.trapKill WebActors.sendback()
+      WebActors.link "junk:bogus"
+      WebActors.receive ["junk:bogus", WebActors.ANY], ->
+        passed = true
+
+    waitsFor -> passed
+
 describe "WebActors.getLocalPrefix", ->
   it "should return the prefix being used for local actors", ->
     actor_id = WebActors.spawn ->
     local_prefix = WebActors.getLocalPrefix()
     local_prefix = "#{local_prefix}:"
     expect(actor_id.substr(0, local_prefix.length)).toEqual(local_prefix)
+
+describe "WebActors.setLocalPrefix", ->
+  afterEach ->
+    WebActors.setLocalPrefix "actor"
+
+  it "should change the prefix used for local actors", ->
+    ready = false
+    local_prefix = "foo"
+    WebActors.setLocalPrefix local_prefix
+    actor_id = WebActors.spawn ->
+      ready = true
+
+    waitsFor -> ready
+
+    runs ->
+      local_prefix = "#{local_prefix}:"
+      expect(actor_id.substr(0, local_prefix.length)).toEqual(local_prefix)
 
 describe "WebActors.allocateChildPrefix", ->
   it "should return a prefix based on a key and the local prefix", ->

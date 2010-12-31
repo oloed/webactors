@@ -140,9 +140,13 @@ class ForwardingActor
 next_actor_serial = 0
 actors_by_id = {}
 local_prefix = "actor:"
+default_gateway = null
 gateways_by_prefix = {}
 
 getLocalPrefix = -> local_prefix.substr(0, local_prefix.length-1)
+
+setLocalPrefix = (prefix) ->
+  local_prefix = "#{prefix}:"
 
 alloc_actor_id = ->
   "#{local_prefix}#{next_actor_serial++}"
@@ -154,16 +158,24 @@ lookup_actor = (actor_id) ->
   actor = actors_by_id[actor_id]
   return actor if actor
   longest_prefix = ""
+  if actor_id.substr(0, local_prefix.length) is local_prefix
+    longest_prefix = local_prefix
   for prefix, callback of gateways_by_prefix 
     # prefixes in the map include the trailing ':' separator
     if actor_id.substr(0, prefix.length) is prefix
       if prefix.length > longest_prefix.length
         longest_prefix = prefix
   if longest_prefix.length > 0
-    callback = gateways_by_prefix[longest_prefix]
-    return new ForwardingActor(actor_id, callback)
+    if longest_prefix is local_prefix
+      return new DeadActor(actor_id)
+    else
+      callback = gateways_by_prefix[longest_prefix]
+      return new ForwardingActor(actor_id, callback)
   else
-    return new DeadActor(actor_id)
+    if default_gateway
+      return new ForwardingActor(actor_id, default_gateway)
+    else
+      return new DeadActor(actor_id)
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor
@@ -179,6 +191,9 @@ registerGateway = (prefix, callback) ->
 unregisterGateway = (prefix) ->
   prefix = "#{prefix}:"
   delete gateways_by_prefix[prefix]
+
+setDefaultGateway = (callback) ->
+  default_gateway = callback
 
 spawn = (body) ->
   actor_id = alloc_actor_id()
@@ -258,5 +273,7 @@ injectEvent = (actor_id, verb, args...) ->
 @WebActors.injectEvent = injectEvent
 @WebActors.registerGateway = registerGateway
 @WebActors.unregisterGateway = unregisterGateway
+@WebActors.setDefaultGateway = setDefaultGateway
 @WebActors.getLocalPrefix = getLocalPrefix
+@WebActors.setLocalPrefix = setLocalPrefix
 @WebActors.allocateChildPrefix = allocateChildPrefix
