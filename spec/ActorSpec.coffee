@@ -143,7 +143,7 @@ describe "A WebActors Actor", ->
 
     runs -> expect(received).toEqual([[actor_b_id, "error"]])
 
-  it "should fail attempts to link with non-existent actors", ->
+  it "should get killed when attempting to link to non-existent actors", ->
     passed = false
 
     root_id = WebActors.spawn ->
@@ -154,7 +154,7 @@ describe "A WebActors Actor", ->
 
     waitsFor -> passed
 
-  it "should fail attempts to link with dead actors", ->
+  it "should get killed when attempting to link with dead actors", ->
     passed = false
 
     root_id = WebActors.spawn ->
