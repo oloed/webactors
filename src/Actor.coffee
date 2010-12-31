@@ -121,21 +121,58 @@ class LocalActor
                 actor.mailbox.splice(index, 1)
           else
             actor.shutdown(reason)
-  
+
+class ForwardingActor
+  constructor: (@actor_id, @callback) ->
+
+  send: (message) ->
+    @callback(@actor_id, "send", message)
+
+  link: (other_id) ->
+    @callback(@actor_id, "link", other_id)
+
+  unlink: (other_id) ->
+    @callback(@actor_id, "unlink", other_id)
+
+  kill: (killer_id, reason) ->
+    @callback(@actor_id, "kill", killer_id, reason)
+
 next_actor_serial = 0
 actors_by_id = {}
+gateways_by_prefix = {}
 
 alloc_actor_id = ->
   String(next_actor_serial++)
 
 lookup_actor = (actor_id) ->
-  actors_by_id[actor_id] or new DeadActor(actor_id)
+  actor = actors_by_id[actor_id]
+  return actor if actor
+  longest_prefix = ""
+  for prefix, callback of gateways_by_prefix 
+    # prefixes in the map include the trailing ':' separator
+    if actor_id.substr(0, prefix.length) is prefix
+      if prefix.length > longest_prefix.length
+        longest_prefix = prefix
+  if longest_prefix.length > 0
+    callback = gateways_by_prefix[longest_prefix]
+    return new ForwardingActor(actor_id, callback)
+  else
+    return new DeadActor(actor_id)
 
 register_actor = (actor_id, actor) ->
   actors_by_id[actor_id] = actor
 
 unregister_actor = (actor_id) ->
   delete actors_by_id[actor_id]
+
+registerGateway = (prefix, callback) ->
+  prefix = "#{prefix}:"
+  gateways_by_prefix[prefix] = callback
+  undefined
+
+unregisterGateway = (prefix) ->
+  prefix = "#{prefix}:"
+  delete gateways_by_prefix[prefix]
 
 spawn = (body) ->
   actor_id = alloc_actor_id()
@@ -151,10 +188,12 @@ spawnLinked = (body) ->
 send = (actor_id, message) ->
   actor = lookup_actor(actor_id)
   actor.send(message)
+  undefined
 
 receive = (pattern, cont) ->
   actor = current_actor
   current_actor.receive(pattern, cont)
+  undefined
 
 self = ->
   current_actor.actor_id
@@ -164,20 +203,24 @@ sendSelf = (message) ->
 
 trapKill = (handler) ->
   current_actor.trapKill handler
+  undefined
 
 kill = (actor_id, reason) ->
   actor = lookup_actor(actor_id)
   actor.kill(current_actor.actor_id, reason)
+  undefined
 
 link = (actor_id) ->
   current_actor.link(actor_id)
   actor = lookup_actor(actor_id)
   actor.link(current_actor.actor_id)
+  undefined
 
 unlink = (actor_id) ->
   current_actor.unlink(actor_id)
   actor = lookup_actor(actor_id)
   actor.unlink(current_actor.actor_id)
+  undefined
 
 _sendback = (actor_id, curried_args) ->
   (callback_args...) ->
@@ -207,3 +250,5 @@ injectEvent = (actor_id, verb, args...) ->
 @WebActors.sendback = sendback
 @WebActors.sendbackTo = sendbackTo
 @WebActors.injectEvent = injectEvent
+@WebActors.registerGateway = registerGateway
+@WebActors.unregisterGateway = unregisterGateway

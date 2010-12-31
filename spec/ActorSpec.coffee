@@ -373,3 +373,78 @@ describe "WebActors.injectEvent", ->
     waitsFor -> received.length > 0
 
     runs -> expect(received).toEqual([["blah", "foobar", "baz"]])
+
+describe "WebActors routing", ->
+  afterEach ->
+    WebActors.unregisterGateway "foo"
+    WebActors.unregisterGateway "foo:bar"
+
+  it "should allow unregistering unregistered prefixes", ->
+    WebActors.unregisterGateway "blah"
+
+  it "should allow registering gateways by prefix", ->
+    received = []
+
+    WebActors.registerGateway "foo", (args...) ->
+      received.push args
+    WebActors.send "hoge:0", "1234"
+    WebActors.send "foo:0", "abc123"
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual([["foo:0", "send", "abc123"]])
+
+  it "should route on partial prefixes", ->
+    received = []
+
+    WebActors.registerGateway "foo", (args...) ->
+      received.push args
+    WebActors.send "hoge:0", "1234"
+    WebActors.send "foo:bar:0", "abc123"
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual([["foo:bar:0", "send", "abc123"]])
+
+  it "should give priority to longer prefixes", ->
+    received = []
+
+    WebActors.registerGateway "foo", (args...) ->
+      received.push ["short"].concat(args)
+    WebActors.registerGateway "foo:bar", (args...) ->
+      received.push ["long"].concat(args)
+    WebActors.send "hoge:0", "1234"
+    WebActors.send "foo:0", "xyz789"
+    WebActors.send "foo:bar:0", "abc123"
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual([["short", "foo:0", "send", "xyz789"],
+                                      ["long", "foo:bar:0", "send", "abc123"]])
+
+  it "should route link and kill events", ->
+    received = []
+
+    WebActors.registerGateway "foo", (args...) ->
+      received.push args
+    actor_id = WebActors.spawn ->
+      WebActors.link "foo:0"
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual([["foo:0", "link", actor_id],
+                                      ["foo:0", "kill", actor_id, null]])
+
+  it "should route unlink events", ->
+    received = []
+
+    WebActors.registerGateway "foo", (args...) ->
+      received.push args
+    actor_id = WebActors.spawn ->
+      WebActors.link "foo:0"
+      WebActors.unlink "foo:0"
+
+    waitsFor -> received.length > 0
+
+    runs -> expect(received).toEqual([["foo:0", "link", actor_id],
+                                      ["foo:0", "unlink", actor_id]])
