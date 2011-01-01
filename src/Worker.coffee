@@ -1,4 +1,7 @@
-@WebActors ?= {}
+WebActors = if require? and exports?
+              exports
+            else
+              @WebActors ?= {}
 
 spawnWorker = (script_url) ->
   worker_prefix = WebActors.allocateChildPrefix("worker")
@@ -27,5 +30,5 @@ initWorker = (body) ->
     WebActors.spawn ->
       body.apply(this)
 
-@WebActors.spawnWorker = spawnWorker
-@WebActors.initWorker = initWorker
+WebActors.spawnWorker = spawnWorker
+WebActors.initWorker = initWorker

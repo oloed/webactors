@@ -1,4 +1,7 @@
-@WebActors ?= {}
+WebActors = if require? and exports?
+              exports
+            else
+              @WebActors ?= {}
 
 class CapturingPattern
   constructor: (@body) ->
@@ -53,8 +56,8 @@ match = (pattern, value, captured) ->
     return null unless pattern is value
   return captured
 
-@WebActors.match = (pattern, value) ->
+WebActors.match = (pattern, value) ->
   match pattern, value, []
 
-@WebActors.$VAR = $VAR
-@WebActors.ANY = ANY
+WebActors.$VAR = $VAR
+WebActors.ANY = ANY

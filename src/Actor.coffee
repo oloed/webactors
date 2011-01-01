@@ -1,4 +1,7 @@
-@WebActors ?= {}
+WebActors = if require? and exports?
+              exports
+            else
+              @WebActors ?= {}
 
 class NullActor
   constructor: ->
@@ -258,22 +261,22 @@ injectEvent = (actor_id, verb, args...) ->
   actor[verb].apply(actor, args)
   undefined
 
-@WebActors.spawn = spawn
-@WebActors.spawnLinked = spawnLinked
-@WebActors.send = send
-@WebActors.receive = receive
-@WebActors.self = self
-@WebActors.sendSelf = sendSelf
-@WebActors.trapKill = trapKill
-@WebActors.kill = kill
-@WebActors.link = link
-@WebActors.unlink = unlink
-@WebActors.sendback = sendback
-@WebActors.sendbackTo = sendbackTo
-@WebActors.injectEvent = injectEvent
-@WebActors.registerGateway = registerGateway
-@WebActors.unregisterGateway = unregisterGateway
-@WebActors.setDefaultGateway = setDefaultGateway
-@WebActors.getLocalPrefix = getLocalPrefix
-@WebActors.setLocalPrefix = setLocalPrefix
-@WebActors.allocateChildPrefix = allocateChildPrefix
+WebActors.spawn = spawn
+WebActors.spawnLinked = spawnLinked
+WebActors.send = send
+WebActors.receive = receive
+WebActors.self = self
+WebActors.sendSelf = sendSelf
+WebActors.trapKill = trapKill
+WebActors.kill = kill
+WebActors.link = link
+WebActors.unlink = unlink
+WebActors.sendback = sendback
+WebActors.sendbackTo = sendbackTo
+WebActors.injectEvent = injectEvent
+WebActors.registerGateway = registerGateway
+WebActors.unregisterGateway = unregisterGateway
+WebActors.setDefaultGateway = setDefaultGateway
+WebActors.getLocalPrefix = getLocalPrefix
+WebActors.setLocalPrefix = setLocalPrefix
+WebActors.allocateChildPrefix = allocateChildPrefix
