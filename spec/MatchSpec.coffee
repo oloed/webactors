@@ -20,12 +20,6 @@ describe "WebActors.match", ->
   it "should match identical arrays", ->
     expect(WebActors.match(["a", "b"], ["a", "b"])).toEqual []
 
-  it "should match subsets of object fields", ->
-    expect(WebActors.match({a: 3}, {a: 3, b: 4})).toEqual []
-
-  it "should not match objects with missing fields", ->
-    expect(WebActors.match({a: 3, b: 4}, {a: 3})).toEqual null
-
   it "should support simple $VAR", ->
     expect(WebActors.match(WebActors.$VAR, 42)).toEqual [42]
 
