@@ -1,5 +1,5 @@
 describe "A WebActors Actor", ->
-  $VAR = WebActors.$VAR
+  $ARG = WebActors.$ARG
   ANY = WebActors.ANY
 
   it "should have a unique ID", ->
@@ -20,7 +20,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive $VAR, (m) -> received.push(m)
+      WebActors.receive $ARG, (m) -> received.push(m)
 
     WebActors.send actor_id, expected
 
@@ -32,13 +32,13 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive $VAR("foo"), (m) ->
+      WebActors.receive $ARG("foo"), (m) ->
         received.push(m)
-        WebActors.receive $VAR("baz"), (m) ->
+        WebActors.receive $ARG("baz"), (m) ->
           received.push(m)
-      WebActors.receive $VAR("bar"), (m) ->
+      WebActors.receive $ARG("bar"), (m) ->
         received.push(m)
-        WebActors.receive $VAR("baz"), (m) ->
+        WebActors.receive $ARG("baz"), (m) ->
           received.push(m)
 
     WebActors.send actor_id, "bar"
@@ -64,7 +64,7 @@ describe "A WebActors Actor", ->
     actor_a_id = WebActors.spawn ->
       WebActors.trapKill WebActors.sendback()
 
-      WebActors.receive $VAR, (m) ->
+      WebActors.receive $ARG, (m) ->
         received.push m
 
     actor_b_id = WebActors.spawn ->
@@ -80,7 +80,7 @@ describe "A WebActors Actor", ->
     actor_a_id = WebActors.spawn ->
       WebActors.trapKill WebActors.sendback()
 
-      WebActors.receive $VAR, (m) ->
+      WebActors.receive $ARG, (m) ->
         received.push m
 
     actor_b_id = WebActors.spawn ->
@@ -95,7 +95,7 @@ describe "A WebActors Actor", ->
 
     actor_a_id = WebActors.spawn ->
       WebActors.trapKill WebActors.sendback()
-      WebActors.receive $VAR, (m) -> received.push m
+      WebActors.receive $ARG, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
       WebActors.link actor_a_id
@@ -112,7 +112,7 @@ describe "A WebActors Actor", ->
     received = []
 
     actor_a_id = WebActors.spawn ->
-      WebActors.receive $VAR, (m) -> received.push m
+      WebActors.receive $ARG, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
       WebActors.kill actor_a_id, "foobar"
@@ -131,7 +131,7 @@ describe "A WebActors Actor", ->
       WebActors.trapKill WebActors.sendback()
       WebActors.receive "go", ->
         WebActors.kill actor_b_id, "testing"
-        WebActors.receive $VAR, (m) -> received.push m
+        WebActors.receive $ARG, (m) -> received.push m
 
     actor_b_id = WebActors.spawn ->
       WebActors.trapKill (killer_id, reason) -> throw "error"
@@ -195,7 +195,7 @@ describe "A WebActors Actor", ->
         WebActors.receive "go", ->
           WebActors.unlink actor_b_id
           WebActors.send actor_b_id, "go"
-          WebActors.receive $VAR, ->
+          WebActors.receive $ARG, ->
 
       actor_b_id = WebActors.spawn ->
         WebActors.link actor_a_id
@@ -204,7 +204,7 @@ describe "A WebActors Actor", ->
       
       setTimeout((-> WebActors.send root_id, "watchdog"), 100)
       WebActors.receive "watchdog", -> passed = true
-      WebActors.receive $VAR, ->
+      WebActors.receive $ARG, ->
 
     waitsFor -> passed
 
@@ -219,7 +219,7 @@ describe "A WebActors Actor", ->
       
       WebActors.receive "go", ->
         WebActors.receive [actor_a_id, null], -> passed = true
-      WebActors.receive $VAR, ->
+      WebActors.receive $ARG, ->
 
     waitsFor -> passed
 
@@ -314,7 +314,7 @@ describe "WebActors.injectEvent", ->
     received = []
 
     actor_id = WebActors.spawn ->
-      WebActors.receive WebActors.$VAR, (message) ->
+      WebActors.receive WebActors.$ARG, (message) ->
         received.push(message)
 
     WebActors.injectEvent actor_id, "send", "foobar"
@@ -328,7 +328,7 @@ describe "WebActors.injectEvent", ->
 
     actor_a_id = WebActors.spawn ->
       WebActors.trapKill WebActors.sendback("blah")
-      WebActors.receive WebActors.$VAR, (message) ->
+      WebActors.receive WebActors.$ARG, (message) ->
         received.push(message)
 
     actor_b_id = WebActors.spawn ->
@@ -343,7 +343,7 @@ describe "WebActors.injectEvent", ->
 
     actor_a_id = WebActors.spawn ->
       WebActors.trapKill WebActors.sendback("blah")
-      WebActors.receive WebActors.$VAR, (message) ->
+      WebActors.receive WebActors.$ARG, (message) ->
         received.push(message)
 
     actor_b_id = WebActors.spawn ->
@@ -363,7 +363,7 @@ describe "WebActors.injectEvent", ->
     actor_id = WebActors.spawn ->
       WebActors.trapKill WebActors.sendback("blah")
       ready = true
-      WebActors.receive WebActors.$VAR, (message) ->
+      WebActors.receive WebActors.$ARG, (message) ->
         received.push(message)
 
     waitsFor -> ready

@@ -98,8 +98,8 @@ function.  It takes a pattern and a callback to be invoked
 when a matching message is received.
 
     function aCallback() {
-      // $VAR matches anything
-      WebActors.receive(WebActors.$VAR, function (message) {
+      // $ARG matches anything
+      WebActors.receive(WebActors.$ARG, function (message) {
         alert(message);
       });
     }
@@ -129,7 +129,7 @@ callback.
 The simplest possible pattern is `WebActors.ANY`, which
 matches anything without extracting any values from it.
 
-The second simplest pattern is `WebActors.$VAR`, which
+The second simplest pattern is `WebActors.$ARG`, which
 also matches anything, but additionally extracts the value
 as a parameter for the callback.  Most of our examples
 use this.
@@ -138,7 +138,7 @@ Patterns can also be ordinary JavaScript values.  When a
 message is an array, pattern matching can also be performed
 on individual array elements; for example:
 
-    WebActors.receive ["foo", WebActors.$VAR, WebActors.$VAR], (a, b) ->
+    WebActors.receive ["foo", WebActors.$ARG, WebActors.$ARG], (a, b) ->
 
 Will match three-element arrays whose first element is "foo",
 and pass the remaining two elements as arguments to the callback.
@@ -158,11 +158,11 @@ aliases for functions defined on library objects.
     var spawn = WebActors.spawn;
     var receive = WebActors.receive;
     var send = WebActors.send;
-    var $VAR = WebActors.$VAR;
+    var $ARG = WebActors.$ARG;
 
     function aCallback() {
-      // $VAR matches anything
-      receive($VAR, function (message) {
+      // $ARG matches anything
+      receive($ARG, function (message) {
         alert(message);
       });
     }
@@ -362,12 +362,12 @@ successful, or `null` otherwise.
 When used in a pattern, `ANY` matches any value
 without capturing it.
 
-### WebActors.$VAR
+### WebActors.$ARG
 
-When used in a pattern, `$VAR` matches any value and
+When used in a pattern, `$ARG` matches any value and
 includes it in the list of captured values returned
 by `WebActors.match`.  The match may be further
-constrained by passing an argument to `$VAR` as a
-function.  That is, `$VAR` will match anything, whereas
-`$VAR(foo)` will only match `foo` (where `foo`
+constrained by passing an argument to `$ARG` as a
+function.  That is, `$ARG` will match anything, whereas
+`$ARG(foo)` will only match `foo` (where `foo`
 is a pattern).

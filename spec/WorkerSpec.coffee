@@ -10,12 +10,12 @@ describe "WebActors.spawnWorker", ->
 
     WebActors.spawn ->
       worker_id = spawn_helper 'spawnWorker', ->
-        WebActors.receive WebActors.$VAR, (reply_id) ->
+        WebActors.receive WebActors.$ARG, (reply_id) ->
           WebActors.send reply_id, "it works!"
 
       WebActors.send worker_id, WebActors.self()
 
-      WebActors.receive WebActors.$VAR, (result) ->
+      WebActors.receive WebActors.$ARG, (result) ->
         expect(result).toEqual("it works!")
         done = true
 
@@ -27,12 +27,12 @@ describe "Workers", ->
 
     WebActors.spawn ->
       worker_id = spawn_helper 'spawnWorker', ->
-        WebActors.receive [WebActors.$VAR], (reply_id) ->
+        WebActors.receive [WebActors.$ARG], (reply_id) ->
           WebActors.send reply_id, "it works!"
 
       WebActors.send worker_id, [WebActors.self()]
 
-      WebActors.receive WebActors.$VAR, (result) ->
+      WebActors.receive WebActors.$ARG, (result) ->
         expect(result).toEqual("it works!")
         done = true
 

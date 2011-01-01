@@ -11,7 +11,7 @@ class CapturingPattern
     captured.push value if captured
     return captured
 
-$VAR = (body) ->
+$ARG = (body) ->
   new CapturingPattern(body)
 
 ANY = ->
@@ -46,7 +46,7 @@ match = (pattern, value, captured) ->
     else
       # punt on doing general matching on objects for now
       return null
-  else if pattern is $VAR
+  else if pattern is $ARG
     # match anything and capture
     captured.push value
   else if pattern is ANY
@@ -59,5 +59,5 @@ match = (pattern, value, captured) ->
 WebActors.match = (pattern, value) ->
   match pattern, value, []
 
-WebActors.$VAR = $VAR
+WebActors.$ARG = $ARG
 WebActors.ANY = ANY
