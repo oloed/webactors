@@ -11,7 +11,7 @@ spawnWorker = (script_url) ->
   worker.postMessage(worker_prefix)
 
   worker.onmessage = (event) ->
-    WebActors.injectEvent.apply(WebActors, event.data)
+    WebActors.injectEvent(event.data)
   WebActors.registerGateway worker_prefix, (args...) ->
     worker.postMessage(args)
 
@@ -23,7 +23,7 @@ initWorker = (body) ->
     WebActors.setLocalPrefix local_prefix
 
     self.onmessage = (event) ->
-      WebActors.injectEvent.apply(WebActors, event.data)
+      WebActors.injectEvent(event.data)
     WebActors.setDefaultGateway (args...) ->
       self.postMessage(args)
 

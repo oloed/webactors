@@ -317,7 +317,7 @@ describe "WebActors.injectEvent", ->
       WebActors.receive WebActors.$ARG, (message) ->
         received.push(message)
 
-    WebActors.injectEvent actor_id, "send", "foobar"
+    WebActors.injectEvent [actor_id, "send", "foobar"]
 
     waitsFor -> received.length > 0
 
@@ -332,7 +332,7 @@ describe "WebActors.injectEvent", ->
         received.push(message)
 
     actor_b_id = WebActors.spawn ->
-      WebActors.injectEvent actor_b_id, "link", actor_a_id
+      WebActors.injectEvent [actor_b_id, "link", actor_a_id]
 
     waitsFor -> received.length > 0
 
@@ -348,7 +348,7 @@ describe "WebActors.injectEvent", ->
 
     actor_b_id = WebActors.spawn ->
       WebActors.link actor_a_id
-      WebActors.injectEvent actor_b_id, "unlink", actor_a_id
+      WebActors.injectEvent [actor_b_id, "unlink", actor_a_id]
 
     setTimeout((-> WebActors.send(actor_a_id, "passed")), 0.5)
 
@@ -368,7 +368,7 @@ describe "WebActors.injectEvent", ->
 
     waitsFor -> ready
 
-    runs -> WebActors.injectEvent actor_id, "kill", "foobar", "baz"
+    runs -> WebActors.injectEvent [actor_id, "kill", "foobar", "baz"]
 
     waitsFor -> received.length > 0
 

@@ -256,7 +256,10 @@ sendback = (curried_args...) ->
 sendbackTo = (actor_id, curried_args...) ->
   _sendback(actor_id, curried_args)
 
-injectEvent = (actor_id, verb, args...) ->
+injectEvent = (message) ->
+  actor_id = message[0]
+  verb = message[1]
+  args = message[2...message.length]
   actor = lookup_actor(actor_id)
   actor[verb].apply(actor, args)
   undefined
