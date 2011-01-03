@@ -45,7 +45,7 @@ class LocalActor
     @mailbox = []
     @killed = false
     @state = {}
-    @clauses = []
+    @receivers = []
     @kill_handler = null
     @linked = {}
 
@@ -56,11 +56,11 @@ class LocalActor
     delete @linked[actor_id]
 
   _consume_message: (message) ->
-    for [pattern, cont] in @clauses
-      captured = WebActors.match(pattern, message)
-      if captured
-        @clauses = []
-        setTimeout(@wrap_cont(cont, captured), 0)
+    for receiver in @receivers
+      cont = receiver(message)
+      if cont
+        @receivers = []
+        setTimeout(@wrap_cont(cont), 0)
         return true
     return false
 
@@ -85,17 +85,22 @@ class LocalActor
     @kill_handler = handler
 
   receive: (pattern, cont) ->
-    unless @killed
-      clause = [pattern, cont]
-      @clauses.push clause
+    return if @killed
+    receiver = (message) ->
+      captured = WebActors.match(pattern, message)
+      if captured 
+        -> cont.apply(this, captured)
+      else
+        null
+    @receivers.push receiver
 
   start: (body) ->
     register_actor @actor_id, this
-    setTimeout(@wrap_cont(body, []), 0)
+    setTimeout(@wrap_cont(body), 0)
 
   shutdown: (reason) ->
     @killed = true
-    @clauses = []
+    @receivers = []
     unregister_actor @actor_id
     linked = @linked
     @linked = null
@@ -103,14 +108,14 @@ class LocalActor
       actor = lookup_actor(actor_id)
       actor.kill(@actor_id, reason)
 
-  wrap_cont: (cont, args) ->
+  wrap_cont: (cont) ->
     actor = this
     -> 
       return if actor.killed
       reason = null
       current_actor = actor
       try
-        cont.apply(actor.state, args)
+        cont.call(actor.state)
       catch e
         message = "Actor #{actor.actor_id}: #{e}"
         console.error(message)
@@ -118,7 +123,7 @@ class LocalActor
       finally
         current_actor = NULL_ACTOR
         unless actor.killed
-          if actor.clauses.length > 0
+          if actor.receivers.length > 0
             for index in [0...actor.mailbox.length]
               if actor._consume_message(actor.mailbox[index])
                 actor.mailbox.splice(index, 1)
