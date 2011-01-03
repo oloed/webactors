@@ -129,16 +129,16 @@ class ForwardingActor
   constructor: (@actor_id, @callback) ->
 
   send: (message) ->
-    @callback(@actor_id, "send", message)
+    @callback {target_id:@actor_id, event_name:"send", message:message}
 
   link: (other_id) ->
-    @callback(@actor_id, "link", other_id)
+    @callback {target_id:@actor_id, event_name:"link", peer_id:other_id}
 
   unlink: (other_id) ->
-    @callback(@actor_id, "unlink", other_id)
+    @callback {target_id:@actor_id, event_name:"unlink", peer_id:other_id}
 
   kill: (killer_id, reason) ->
-    @callback(@actor_id, "kill", killer_id, reason)
+    @callback {target_id:@actor_id, event_name:"kill", killer_id:killer_id, reason:reason}
 
 next_actor_serial = 0
 actors_by_id = {}
@@ -256,12 +256,17 @@ sendback = (curried_args...) ->
 sendbackTo = (actor_id, curried_args...) ->
   _sendback(actor_id, curried_args)
 
-injectEvent = (message) ->
-  actor_id = message[0]
-  verb = message[1]
-  args = message[2...message.length]
-  actor = lookup_actor(actor_id)
-  actor[verb].apply(actor, args)
+injectEvent = (event) ->
+  target = lookup_actor(event.target_id)
+  event_name = event.event_name
+  if event_name is "send"
+    target.send(event.message)
+  else if event_name is "link"
+    target.link(event.peer_id)
+  else if event_name is "unlink"
+    target.unlink(event.peer_id)
+  else if event_name is "kill"
+    target.kill(event.killer_id, event.reason)
   undefined
 
 WebActors.spawn = spawn

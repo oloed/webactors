@@ -12,8 +12,8 @@ spawnWorker = (script_url) ->
 
   worker.onmessage = (event) ->
     WebActors.injectEvent(event.data)
-  WebActors.registerGateway worker_prefix, (args...) ->
-    worker.postMessage(args)
+  WebActors.registerGateway worker_prefix, (event) ->
+    worker.postMessage(event)
 
   worker_id
 
@@ -24,8 +24,8 @@ initWorker = (body) ->
 
     self.onmessage = (event) ->
       WebActors.injectEvent(event.data)
-    WebActors.setDefaultGateway (args...) ->
-      self.postMessage(args)
+    WebActors.setDefaultGateway (event) ->
+      self.postMessage(event)
 
     WebActors.spawn ->
       body.apply(this)

@@ -317,7 +317,7 @@ describe "WebActors.injectEvent", ->
       WebActors.receive WebActors.$ARG, (message) ->
         received.push(message)
 
-    WebActors.injectEvent [actor_id, "send", "foobar"]
+    WebActors.injectEvent {target_id:actor_id, event_name:"send", message:"foobar"}
 
     waitsFor -> received.length > 0
 
@@ -332,7 +332,7 @@ describe "WebActors.injectEvent", ->
         received.push(message)
 
     actor_b_id = WebActors.spawn ->
-      WebActors.injectEvent [actor_b_id, "link", actor_a_id]
+      WebActors.injectEvent {target_id:actor_b_id, event_name:"link", peer_id:actor_a_id}
 
     waitsFor -> received.length > 0
 
@@ -348,7 +348,7 @@ describe "WebActors.injectEvent", ->
 
     actor_b_id = WebActors.spawn ->
       WebActors.link actor_a_id
-      WebActors.injectEvent [actor_b_id, "unlink", actor_a_id]
+      WebActors.injectEvent {target_id:actor_b_id, event_name:"unlink", peer_id:actor_a_id}
 
     setTimeout((-> WebActors.send(actor_a_id, "passed")), 0.5)
 
@@ -368,7 +368,7 @@ describe "WebActors.injectEvent", ->
 
     waitsFor -> ready
 
-    runs -> WebActors.injectEvent [actor_id, "kill", "foobar", "baz"]
+    runs -> WebActors.injectEvent {target_id:actor_id, event_name:"kill", killer_id:"foobar", reason:"baz"}
 
     waitsFor -> received.length > 0
 
@@ -385,69 +385,69 @@ describe "WebActors routing", ->
   it "should allow registering gateways by prefix", ->
     received = []
 
-    WebActors.registerGateway "foo", (args...) ->
-      received.push args
+    WebActors.registerGateway "foo", (event) ->
+      received.push event
     WebActors.send "hoge:0", "1234"
     WebActors.send "foo:0", "abc123"
 
     waitsFor -> received.length > 0
 
-    runs -> expect(received).toEqual([["foo:0", "send", "abc123"]])
+    runs -> expect(received).toEqual([{target_id:"foo:0", event_name:"send", message: "abc123"}])
 
   it "should route on partial prefixes", ->
     received = []
 
-    WebActors.registerGateway "foo", (args...) ->
-      received.push args
+    WebActors.registerGateway "foo", (event) ->
+      received.push event
     WebActors.send "hoge:0", "1234"
     WebActors.send "foo:bar:0", "abc123"
 
     waitsFor -> received.length > 0
 
-    runs -> expect(received).toEqual([["foo:bar:0", "send", "abc123"]])
+    runs -> expect(received).toEqual([{target_id:"foo:bar:0", event_name:"send", message:"abc123"}])
 
   it "should give priority to longer prefixes", ->
     received = []
 
-    WebActors.registerGateway "foo", (args...) ->
-      received.push ["short"].concat(args)
-    WebActors.registerGateway "foo:bar", (args...) ->
-      received.push ["long"].concat(args)
+    WebActors.registerGateway "foo", (event) ->
+      received.push ["short", event]
+    WebActors.registerGateway "foo:bar", (event) ->
+      received.push ["long", event]
     WebActors.send "hoge:0", "1234"
     WebActors.send "foo:0", "xyz789"
     WebActors.send "foo:bar:0", "abc123"
 
     waitsFor -> received.length > 0
 
-    runs -> expect(received).toEqual([["short", "foo:0", "send", "xyz789"],
-                                      ["long", "foo:bar:0", "send", "abc123"]])
+    runs -> expect(received).toEqual([["short", {target_id:"foo:0", event_name: "send", message: "xyz789"}],
+                                      ["long", {target_id:"foo:bar:0", event_name: "send", message: "abc123"}]])
 
   it "should route link and kill events", ->
     received = []
 
-    WebActors.registerGateway "foo", (args...) ->
-      received.push args
+    WebActors.registerGateway "foo", (event) ->
+      received.push event
     actor_id = WebActors.spawn ->
       WebActors.link "foo:0"
 
     waitsFor -> received.length > 0
 
-    runs -> expect(received).toEqual([["foo:0", "link", actor_id],
-                                      ["foo:0", "kill", actor_id, null]])
+    runs -> expect(received).toEqual([{target_id:"foo:0", event_name:"link", peer_id:actor_id},
+                                      {target_id:"foo:0", event_name:"kill", killer_id:actor_id, reason:null}])
 
   it "should route unlink events", ->
     received = []
 
-    WebActors.registerGateway "foo", (args...) ->
-      received.push args
+    WebActors.registerGateway "foo", (event) ->
+      received.push event
     actor_id = WebActors.spawn ->
       WebActors.link "foo:0"
       WebActors.unlink "foo:0"
 
     waitsFor -> received.length > 0
 
-    runs -> expect(received).toEqual([["foo:0", "link", actor_id],
-                                      ["foo:0", "unlink", actor_id]])
+    runs -> expect(received).toEqual([{target_id:"foo:0", event_name:"link", peer_id:actor_id},
+                                      {target_id:"foo:0", event_name:"unlink", peer_id:actor_id}])
 
 describe "WebActors.setDefaultGateway", ->
   afterEach ->
@@ -457,10 +457,10 @@ describe "WebActors.setDefaultGateway", ->
   it "should affect routing for unknown prefixes", ->
     received = []
 
-    WebActors.registerGateway "foo", (args...) ->
-      received.push ["gateway"].concat(args)
-    WebActors.setDefaultGateway (args...) ->
-      received.push ["default"].concat(args)
+    WebActors.registerGateway "foo", (event) ->
+      received.push ["gateway", event]
+    WebActors.setDefaultGateway (event) ->
+      received.push ["default", event]
 
     WebActors.send "#{WebActors.getLocalPrefix()}:bogus", "abc"
     WebActors.send "foo:0", "def"
@@ -469,8 +469,8 @@ describe "WebActors.setDefaultGateway", ->
     waitsFor -> received.length > 1
 
     runs ->
-      expect(received).toEqual([["gateway", "foo:0", "send", "def"],
-                                ["default", "bar:0", "send", "ghi"]])
+      expect(received).toEqual([["gateway", {target_id:"foo:0", event_name:"send", message:"def"}],
+                                ["default", {target_id:"bar:0", event_name:"send", message:"ghi"}]])
 
   it "should restore default behavior when null is passed", ->
     WebActors.setDefaultGateway (args...) ->
