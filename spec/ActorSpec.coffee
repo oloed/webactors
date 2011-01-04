@@ -223,19 +223,6 @@ describe "A WebActors Actor", ->
 
     waitsFor -> passed
 
-  it "should support send-callbacks which accumulate arguments", ->
-    passed = false
-
-    WebActors.spawn ->
-      cb = WebActors.sendback("foo")
-      WebActors.sendSelf "bar"
-      WebActors.receive "bar", ->
-        cb("baz", 1, 2)
-        WebActors.receive ["foo", "baz", 1, 2], -> passed = true
-      WebActors.receive ANY, ->
-
-    waitsFor -> passed
-
   it "should kill actor if trapKill raises", ->
     passed = false
 

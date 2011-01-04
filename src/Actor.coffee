@@ -252,16 +252,6 @@ unlink = (actor_id) ->
   actor.unlink(current_actor.actor_id)
   undefined
 
-_sendback = (actor_id, curried_args) ->
-  (callback_args...) ->
-    send actor_id, curried_args.concat(callback_args)
-
-sendback = (curried_args...) ->
-  _sendback(self(), curried_args)
-
-sendbackTo = (actor_id, curried_args...) ->
-  _sendback(actor_id, curried_args)
-
 injectEvent = (event) ->
   target = lookup_actor(event.target_id)
   event_name = event.event_name
@@ -285,8 +275,6 @@ WebActors.trapKill = trapKill
 WebActors.kill = kill
 WebActors.link = link
 WebActors.unlink = unlink
-WebActors.sendback = sendback
-WebActors.sendbackTo = sendbackTo
 WebActors.injectEvent = injectEvent
 WebActors.registerGateway = registerGateway
 WebActors.unregisterGateway = unregisterGateway

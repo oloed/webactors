@@ -330,20 +330,6 @@ actor will die with that exception.
 The callback should have no side-effects and should avoid
 state-modifying calls to the WebActors API.
 
-### WebActors.sendback(args...) -> cb
-
-Constructs a callback that sends a message to the actor
-that constructed it.  Useful for waiting with setTimeout.
-
-The message sent will consist of the arguments to
-`sendback` concatented with any arguments passed
-to the callback when it is called.
-
-### WebActors.sendbackTo(actorId, args...) -> cb
-
-Like `sendback`, but creates a callback which sends
-a message to an actor other than the current one.
-
 ## Pattern Matching
 
 WebActors also provides a utility function for performing
