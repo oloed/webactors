@@ -7,6 +7,16 @@ describe "WebActors.match", ->
     expect(WebActors.match("foobar", "barfoo")).toBeFalsy()
     expect(WebActors.match("foobar", "foobar")).toBeTruthy()
 
+  it "should match null only with null", ->
+    expect(WebActors.match(null, null)).toBeTruthy()
+    expect(WebActors.match(null, {})).toBeFalsy()
+    expect(WebActors.match(null, "3")).toBeFalsy()
+    expect(WebActors.match(null, undefined)).toBeFalsy()
+
+  it "should not match strings and numbers", ->
+    expect(WebActors.match("3", 3)).toBeFalsy()
+    expect(WebActors.match(3, "3")).toBeFalsy()
+
   it "should exactly match booleans", ->
     for b in [true, false]
       expect(WebActors.match(b, not b)).toBeFalsy()
@@ -29,3 +39,6 @@ describe "WebActors.match", ->
   it "should support wildcards", ->
     expect(WebActors.match(WebActors.ANY, 42)).toBeTruthy()
     expect(WebActors.match(WebActors.ANY, "testing")).toBeTruthy()
+    expect(WebActors.match(WebActors.ANY, true)).toBeTruthy()
+    expect(WebActors.match(WebActors.ANY, false)).toBeTruthy()
+    expect(WebActors.match(WebActors.ANY, undefined)).toBeTruthy()
