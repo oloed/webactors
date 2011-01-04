@@ -23,6 +23,12 @@ describe "WebActors.match", ->
   it "should support simple $ARG", ->
     expect(WebActors.match(WebActors.$ARG, 42)).toEqual [42]
 
+  it "should match subsets of object fields", ->
+    expect(WebActors.match({a: 3}, {a: 3, b: 4})).toEqual []
+
+  it "should not match objects with missing fields", ->
+    expect(WebActors.match({a: 3, b: 4}, {a: 3})).toEqual null
+
   it "should support restricted $ARG", ->
     expect(WebActors.match(WebActors.$ARG(42), 38)).toEqual null
     expect(WebActors.match(WebActors.$ARG(42), 42)).toEqual [42]
