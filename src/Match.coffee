@@ -9,7 +9,7 @@ empty_func = ->
 
 is_array = (value) ->
   return true if value instanceof Array
-  if typeof(value) is "object"
+  if value and typeof(value) is "object"
     # fallback necessary for arrays passed to workers (in Chrome)
     try
       empty_func.apply(this, value)
@@ -21,7 +21,7 @@ is_array = (value) ->
 
 match = (pattern, value) ->
   if typeof(pattern) is "object"
-    if pattern instanceof Array
+    if is_array(pattern)
       return false unless is_array(value)
       pattern_length = pattern.length
       return false unless value.length is pattern_length
