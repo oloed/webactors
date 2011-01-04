@@ -23,7 +23,7 @@ match = (pattern, value) ->
   if typeof(pattern) is "object"
     if pattern is null
       value is null
-    else if is_array(pattern)
+    else if pattern instanceof Array
       return false unless is_array(value)
       pattern_length = pattern.length
       return false unless value.length is pattern_length
