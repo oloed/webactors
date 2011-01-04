@@ -320,16 +320,15 @@ Normally, when an actor receives a kill, it will immediately
 exit.  `trapKill` allows for more nuanced behavior
 than the default.
 
-This passed-in function receives two arguments: the id of
-the originating (not the receiving!) actor, and the reason
-for the kill.  If it throws an exception, the actor will
-die with that exception.
+This passed-in callback function receives two arguments:
+the id of the originating (not the receiving!) actor, and
+the reason for the kill.  It should return a message to
+be delivered to the actor receiving the kill.  If the
+function instead throws an exception, then the receiving
+actor will die with that exception.
 
-Note that the callback does NOT run in the context of an
-actor, so functions like `receive` should not be used.
-
-Typically, `sendback` is used with `trapKill` to redirect
-the kill to the actor's mailbox as a regular message.
+The callback should have no side-effects and should avoid
+state-modifying calls to the WebActors API.
 
 ### WebActors.sendback(args...) -> cb
 

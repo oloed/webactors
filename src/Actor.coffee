@@ -73,7 +73,8 @@ class LocalActor
       saved_actor = current_actor
       current_actor = NULL_ACTOR
       try
-        @kill_handler(killer_id, reason)
+        message = @kill_handler(killer_id, reason)
+        WebActors.send @actor_id, message
       catch e
         @shutdown(e)
       finally
