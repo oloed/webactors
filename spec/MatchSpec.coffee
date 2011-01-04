@@ -1,45 +1,31 @@
 describe "WebActors.match", ->
   it "should exactly match numbers", ->
-    expect(WebActors.match(3, 2)).toEqual null
-    expect(WebActors.match(3, 3)).toEqual []
+    expect(WebActors.match(3, 2)).toBeFalsy()
+    expect(WebActors.match(3, 3)).toBeTruthy()
 
   it "should exactly match strings", ->
-    expect(WebActors.match("foobar", "barfoo")).toEqual null
-    expect(WebActors.match("foobar", "foobar")).toEqual []
+    expect(WebActors.match("foobar", "barfoo")).toBeFalsy()
+    expect(WebActors.match("foobar", "foobar")).toBeTruthy()
 
   it "should exactly match booleans", ->
     for b in [true, false]
-      expect(WebActors.match(b, not b)).toEqual null
-      expect(WebActors.match(b, b)).toEqual []
+      expect(WebActors.match(b, not b)).toBeFalsy()
+      expect(WebActors.match(b, b)).toBeTruthy()
 
   it "should not match dissimilar arrays", ->
-    expect(WebActors.match(["a", "b"], ["a", "a"])).toEqual null
-    expect(WebActors.match(["a", "b"], ["a", "b", "c"])).toEqual null
-    expect(WebActors.match(["a", "b"], ["a"])).toEqual null
+    expect(WebActors.match(["a", "b"], ["a", "a"])).toBeFalsy()
+    expect(WebActors.match(["a", "b"], ["a", "b", "c"])).toBeFalsy()
+    expect(WebActors.match(["a", "b"], ["a"])).toBeFalsy()
 
   it "should match identical arrays", ->
-    expect(WebActors.match(["a", "b"], ["a", "b"])).toEqual []
-
-  it "should support simple $ARG", ->
-    expect(WebActors.match(WebActors.$ARG, 42)).toEqual [42]
+    expect(WebActors.match(["a", "b"], ["a", "b"])).toBeTruthy()
 
   it "should match subsets of object fields", ->
-    expect(WebActors.match({a: 3}, {a: 3, b: 4})).toEqual []
+    expect(WebActors.match({a: 3}, {a: 3, b: 4})).toBeTruthy()
 
   it "should not match objects with missing fields", ->
-    expect(WebActors.match({a: 3, b: 4}, {a: 3})).toEqual null
-
-  it "should support restricted $ARG", ->
-    expect(WebActors.match(WebActors.$ARG(42), 38)).toEqual null
-    expect(WebActors.match(WebActors.$ARG(42), 42)).toEqual [42]
-
-  it "should support restricted $ARG for strings", ->
-    expect(WebActors.match(WebActors.$ARG("foo"), "bar")).toEqual null
-    expect(WebActors.match(WebActors.$ARG("foo"), "foo")).toEqual ["foo"]
-
-  it "should support destructuring $ARG", ->
-    expect(WebActors.match([WebActors.$ARG, "b", WebActors.$ARG], ["a", "b", "c"])).toEqual ["a", "c"]
+    expect(WebActors.match({a: 3, b: 4}, {a: 3})).toBeFalsy()
 
   it "should support wildcards", ->
-    expect(WebActors.match(WebActors.ANY, 42)).toEqual []
-    expect(WebActors.match(WebActors.ANY, "testing")).toEqual []
+    expect(WebActors.match(WebActors.ANY, 42)).toBeTruthy()
+    expect(WebActors.match(WebActors.ANY, "testing")).toBeTruthy()

@@ -90,7 +90,7 @@ class LocalActor
     receiver = (message) ->
       captured = WebActors.match(pattern, message)
       if captured 
-        -> cont.apply(this, captured)
+        -> cont.call(this, message)
       else
         null
     @receivers.push receiver

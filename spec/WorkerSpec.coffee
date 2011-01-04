@@ -1,3 +1,5 @@
+ANY = WebActors.ANY
+
 spawn_helper = (method, body) ->
   actor_id = WebActors[method]("spec/WorkerSpecStub.js")
   body_string = "(#{body})"
@@ -10,12 +12,12 @@ describe "WebActors.spawnWorker", ->
 
     WebActors.spawn ->
       worker_id = spawn_helper 'spawnWorker', ->
-        WebActors.receive WebActors.$ARG, (reply_id) ->
+        WebActors.receive WebActors.ANY, (reply_id) ->
           WebActors.send reply_id, "it works!"
 
       WebActors.send worker_id, WebActors.self()
 
-      WebActors.receive WebActors.$ARG, (result) ->
+      WebActors.receive ANY, (result) ->
         expect(result).toEqual("it works!")
         done = true
 
@@ -27,12 +29,13 @@ describe "Workers", ->
 
     WebActors.spawn ->
       worker_id = spawn_helper 'spawnWorker', ->
-        WebActors.receive [WebActors.$ARG], (reply_id) ->
+        WebActors.receive [WebActors.ANY], (m) ->
+          reply_id = m[0]
           WebActors.send reply_id, "it works!"
 
       WebActors.send worker_id, [WebActors.self()]
 
-      WebActors.receive WebActors.$ARG, (result) ->
+      WebActors.receive ANY, (result) ->
         expect(result).toEqual("it works!")
         done = true
 

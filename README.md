@@ -98,8 +98,8 @@ function.  It takes a pattern and a callback to be invoked
 when a matching message is received.
 
     function aCallback() {
-      // $ARG matches anything
-      WebActors.receive(WebActors.$ARG, function (message) {
+      // ANY matches anything
+      WebActors.receive(WebActors.ANY, function (message) {
         alert(message);
       });
     }
@@ -122,31 +122,57 @@ for them (by calling `receive` with a matching pattern).
 ### Patterns
 
 The first argument to `receive` is a pattern which is used
-to match an incoming message and extract values from it.
-In case of a match, values are passed as arguments to the
-callback.
+to match an incoming message.  Patterns are ordinary
+JavaScript values.
 
-The simplest possible pattern is `WebActors.ANY`, which
-matches anything without extracting any values from it.
+#### Primitive Values
 
-The second simplest pattern is `WebActors.$ARG`, which
-also matches anything, but additionally extracts the value
-as a parameter for the callback.  Most of our examples
-use this.
+Used as a pattern, any primitive value matches an
+equivalent primitive value (as determined by `===`).
 
-Patterns can also be ordinary JavaScript values.  When a
-message is an array, pattern matching can also be performed
-on individual array elements; for example:
+    3 matches 3
+    "foo" matches "foo"
 
-    WebActors.receive ["foo", WebActors.$ARG, WebActors.$ARG], (a, b) ->
+    3 does not match 4
+    "3" does not match 3
+    3 does not match "3"
+    "foo" does not match "bar"
 
-Will match three-element arrays whose first element is "foo",
-and pass the remaining two elements as arguments to the callback.
+#### Arrays
+
+When used as a pattern, an Array matches an array with
+the same length and matching elements (as determined by the
+pattern-matching rules)
+
+    [1, 2, 3] matches [1, 2, 3]
+
+    [1, 2, 3] does not match [4, 5, 6]
+    [1, 2, 3] does not match [1, 2, 3, 4]
+
+#### Objects
+
+When used as a pattern, an object matches any object with
+the same fields and matching values.  (The matched object
+may have other fields in addition.)
+
+    {a: 1} matches {a: 1}
+    {a: 1} matches {a: 1, b: 2}
+
+    {a: 1} does not match {}
+    {a: 1} does not match {a: 3}
+    {a: 1} does not match {b: 1}
+
+#### Wildcards
+
+`WebActors.ANY` matches any JavaScript value.
+
+#### WebActors.match
 
 If you want to, you can use WebActors pattern matching
-directly in your own non-actor code by using `WebActors.match`.
-`match` takes a pattern and a value, and returns a list of
-captured values in case of a match, `null` otherwise.
+directly in your own non-actor code by using
+`WebActors.match`.  `match` takes a pattern and a value,
+and returns a truthy value in case of a match, or a falsy
+one otherwise.
 
 ### Saving Some Typing
 
@@ -158,11 +184,10 @@ aliases for functions defined on library objects.
     var spawn = WebActors.spawn;
     var receive = WebActors.receive;
     var send = WebActors.send;
-    var $ARG = WebActors.$ARG;
+    var ANY = WebActors.ANY;
 
     function aCallback() {
-      // $ARG matches anything
-      receive($ARG, function (message) {
+      receive(ANY, function (message) {
         alert(message);
       });
     }
@@ -344,15 +369,4 @@ successful, or `null` otherwise.
 
 ### WebActors.ANY
 
-When used in a pattern, `ANY` matches any value
-without capturing it.
-
-### WebActors.$ARG
-
-When used in a pattern, `$ARG` matches any value and
-includes it in the list of captured values returned
-by `WebActors.match`.  The match may be further
-constrained by passing an argument to `$ARG` as a
-function.  That is, `$ARG` will match anything, whereas
-`$ARG(foo)` will only match `foo` (where `foo`
-is a pattern).
+When used in a pattern, `ANY` matches any value.

@@ -3,17 +3,6 @@ WebActors = if require? and exports?
             else
               @WebActors ?= {}
 
-class CapturingPattern
-  constructor: (@body) ->
-  
-  match: (value, captured) ->
-    captured = match(@body, value, captured)
-    captured.push value if captured
-    return captured
-
-$ARG = (body) ->
-  new CapturingPattern(body)
-
 ANY = ->
 
 empty_func = ->
@@ -37,27 +26,20 @@ match = (pattern, value, captured) ->
       pattern_length = pattern.length
       return null unless value.length is pattern_length
       for i in [0...pattern_length]
-        captured = match(pattern[i], value[i], captured)
-        break if captured is null
-    else if pattern instanceof CapturingPattern
-      captured = pattern.match(value, captured)
+        matched = match(pattern[i], value[i], captured)
+        return false unless matched
     else
       return null if typeof(value) is not "object"
       for name of pattern
-        captured = match(pattern[name], value[name], captured)
-        break if captured is null
-  else if pattern is $ARG
-    # match anything and capture
-    captured.push value
+        matched = match(pattern[name], value[name], captured)
+        return false unless matched
   else if pattern is ANY
-    jasmine.log(value)
     # match anything
+    return true
   else
-    return null unless pattern is value
-  return captured
+    return pattern is value
 
 WebActors.match = (pattern, value) ->
   match pattern, value, []
 
-WebActors.$ARG = $ARG
 WebActors.ANY = ANY
