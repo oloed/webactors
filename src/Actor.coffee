@@ -44,6 +44,7 @@ class LocalActor
   constructor: (@actor_id) ->
     @mailbox = []
     @killed = false
+    @running = false
     @state = {}
     @receivers = []
     @kill_handler = null
@@ -55,7 +56,7 @@ class LocalActor
   unlink: (actor_id) ->
     delete @linked[actor_id]
 
-  _consume_message: (message) ->
+  consume_message: (message) ->
     for receiver in @receivers
       cont = receiver(message)
       if cont
@@ -65,8 +66,8 @@ class LocalActor
     return false
 
   send: (message) ->
-    unless @_consume_message(message)
-      @mailbox.push(message)
+    return if not @running and @consume_message(message)
+    @mailbox.push(message)
 
   kill: (killer_id, reason) ->
     if @kill_handler
@@ -115,6 +116,7 @@ class LocalActor
       return if actor.killed
       reason = null
       current_actor = actor
+      actor.running = true
       try
         cont.call(actor.state)
       catch e
@@ -123,10 +125,11 @@ class LocalActor
         reason = e
       finally
         current_actor = NULL_ACTOR
+        actor.running = false
         unless actor.killed
           if actor.receivers.length > 0
             for index in [0...actor.mailbox.length]
-              if actor._consume_message(actor.mailbox[index])
+              if actor.consume_message(actor.mailbox[index])
                 actor.mailbox.splice(index, 1)
           else
             actor.shutdown(reason)
