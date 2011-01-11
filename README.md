@@ -353,7 +353,12 @@ function instead throws an exception, then the receiving
 actor will die with that exception.
 
 The callback should have no side-effects and should avoid
-state-modifying calls to the WebActors API.
+making state-modifying calls to the WebActors API.
+
+Note that kills don't, in themselves, break links.  If an
+actor is sent a kill message by an actor it is linked to,
+the link will remain in place until the actor exits or
+it calls `unlink`.
 
 ## Pattern Matching
 
@@ -370,3 +375,53 @@ successful, or `null` otherwise.
 ### WebActors.ANY
 
 When used in a pattern, `ANY` matches any value.
+
+## Web Workers
+
+In browsers that support it, WebActors offers support for
+true parallelism through the use of HTML5 Web Workers.
+
+Not only can WebActors be used within a worker, WebActors
+itself provides an actor-based API for managing Web
+Workers in a way that largely abstracts the difference
+between code running in a web worker.
+
+### WebActors.spawnWorker(scriptUrl)
+
+Starts a Web Worker running the given script and spawns
+an actor inside it, returning the new actor's id.  This
+actor will run in parallel with the parent VM and can
+be used to perform background tasks without blocking the
+browser UI.
+
+In most respects, the spawned actor behaves like any
+other WebActors actor, and can interoperate with
+actors in the worker's parent VM.  The main difference
+is that any messages crossing the worker/parent boundary
+are copied using `postMessage`, so some message features
+(such as classes) may not be preserved.
+
+### WebActors.spawnLinkedWorker(scriptUrl)
+
+Analagous to `spawnLinked`, but spawns a worker just as
+`spawnWorker` does.  The spawned worker is immediately
+linked to the actor that spawned it.
+
+### WebActors.initWorker(function () {...})
+
+The "bottom half" of `spawnWorker`, `initWorker` MUST
+be called before any other WebActors API functions in
+a script started via `spawnWorker`.
+
+The passed-in function supplies the body of the actor
+returned by `spawnWorker`.
+
+When this actor exits, the worker will terminate, killing
+any other actors inside!
+
+### WebActors.terminateWorker(actorId)
+
+Forcibly terminates a worker spawned by `spawnWorker`,
+even if it is stuck in an infinite loop.  This is only
+effective when called from the worker's parent VM;
+otherwise, it has no effect.

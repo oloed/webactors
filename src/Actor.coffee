@@ -36,7 +36,7 @@ class DeadActor
   unlink: (actor_id) ->
 
   send: (message) ->
-    console.error("Discarding message to actor #{@actor_id}")
+    reportError("Discarding message to actor #{@actor_id}")
 
   kill: (killer_id, reason) ->
 
@@ -121,7 +121,7 @@ class LocalActor
         cont.call(actor.state)
       catch e
         message = "Actor #{actor.actor_id}: #{e}"
-        console.error(message)
+        reportError(message)
         reason = e
       finally
         current_actor = NULL_ACTOR
@@ -138,16 +138,33 @@ class ForwardingActor
   constructor: (@actor_id, @callback) ->
 
   send: (message) ->
-    @callback {target_id:@actor_id, event_name:"send", message:message}
+    event =
+      target_id: @actor_id
+      event_name: "send"
+      message: message
+    @callback event
 
   link: (other_id) ->
-    @callback {target_id:@actor_id, event_name:"link", peer_id:other_id}
+    event =
+      target_id: @actor_id
+      event_name: "link"
+      peer_id: other_id
+    @callback event
 
   unlink: (other_id) ->
-    @callback {target_id:@actor_id, event_name:"unlink", peer_id:other_id}
+    event =
+      target_id: @actor_id
+      event_name: "unlink"
+      peer_id: other_id
+    @callback event
 
   kill: (killer_id, reason) ->
-    @callback {target_id:@actor_id, event_name:"kill", killer_id:killer_id, reason:reason}
+    event =
+      target_id: @actor_id
+      event_name: "kill"
+      killer_id: killer_id
+      reason: reason
+    @callback event
 
 next_actor_serial = 0
 actors_by_id = {}
@@ -268,6 +285,19 @@ injectEvent = (event) ->
     target.kill(event.killer_id, event.reason)
   undefined
 
+error_handler = (message) ->
+  console.error(message)
+
+reportError = (message) ->
+  try
+    error_handler(message)
+    undefined
+  catch e
+    undefined
+
+setErrorHandler = (callback) ->
+  error_handler = callback
+
 WebActors.spawn = spawn
 WebActors.spawnLinked = spawnLinked
 WebActors.send = send
@@ -278,6 +308,7 @@ WebActors.trapKill = trapKill
 WebActors.kill = kill
 WebActors.link = link
 WebActors.unlink = unlink
+
 WebActors.injectEvent = injectEvent
 WebActors.registerGateway = registerGateway
 WebActors.unregisterGateway = unregisterGateway
@@ -285,3 +316,5 @@ WebActors.setDefaultGateway = setDefaultGateway
 WebActors.getLocalPrefix = getLocalPrefix
 WebActors.setLocalPrefix = setLocalPrefix
 WebActors.allocateChildPrefix = allocateChildPrefix
+WebActors.reportError = reportError
+WebActors.setErrorHandler = setErrorHandler
