@@ -35,7 +35,7 @@ describe "WebActor.spawnLinkedWorker", ->
 
     waitsFor -> passed
 
-describe "Workers", ->
+describe "WebActors Workers", ->
   it "should successfully receive messages with arrays in them", ->
     passed = false
 
