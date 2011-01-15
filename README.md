@@ -384,7 +384,8 @@ true parallelism through the use of HTML5 Web Workers.
 Not only can WebActors be used within a worker, WebActors
 itself provides an actor-based API for managing Web
 Workers in a way that largely abstracts the difference
-between code running in a web worker.
+between actors running in a web worker and actors running
+in the page context.
 
 ### WebActors.spawnWorker(scriptUrl)
 
