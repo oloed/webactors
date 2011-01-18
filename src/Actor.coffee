@@ -3,8 +3,15 @@ WebActors = if require? and exports?
             else
               @WebActors ?= {}
 
-nextTick = (cb) ->
-  setTimeout(cb, 0)
+if require?
+  try
+    nextTick = require('process').nextTick
+  catch e
+    null
+
+unless nextTick?
+  nextTick = (cb) ->
+    setTimeout(cb, 0)
 
 class NullActor
   constructor: ->
