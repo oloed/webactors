@@ -67,7 +67,7 @@ spawnWorker = (script_url) ->
   # launch a monitor to handle termination and cleanup
   monitor_id = WebActors.spawn ->
     WebActors.trapKill (killer_id, reason) ->
-      ["killed", killer_id]
+      ["exited", killer_id]
     WebActors.link worker_id
 
     worker_links = new LinkMap()
@@ -86,35 +86,11 @@ spawnWorker = (script_url) ->
       unless worker_links.has_links(b)
         WebActors.unlink b
 
-    track_link_events = (event) ->
-      if event.event_name is "link"
-        track_link(event.target_id, event.peer_id)
-      else if event.event_name is "unlink"
-        track_unlink(event.target_id, event.peer_id)
-
     track_exit = (actor_id) ->
       worker_links.remove(actor_id)
       WebActors.unlink actor_id
 
-    # catch up on outstanding events, then synthesize kills and exit
-    termination_loop = ->
-      WebActors.receive ["from_worker", WebActors.ANY], (m) ->
-        event = m[1]
-        track_link_events(event)
-        WebActors._injectEvent(event)
-        termination_loop()
-
-      WebActors.receive ["to_worker", WebActors.ANY], (m) ->
-        event = m[1]
-        track_link_events(event)
-        termination_loop()
-
-      WebActors.receive "terminated", ->
-        for actor_id, links of worker_links.links
-          for peer_id, flag of links
-            synthesize_kill(peer_id, actor_id, null)
-
-    # track outstanding links to actors in worker
+    # track outstanding links with actors in the worker
     monitor_loop = ->
       WebActors.receive "terminate", ->
         delete monitors_by_worker[worker_id]
@@ -127,39 +103,58 @@ spawnWorker = (script_url) ->
         WebActors.sendSelf "terminated"
         termination_loop()
 
-      WebActors.receive ["from_worker", WebActors.ANY], (m) ->
-        event = m[1]
-        track_link_events(event)
-        WebActors._injectEvent(event)
+      WebActors.receive {event_name: "link"}, (event) ->
+        track_link(event.target_id, event.peer_id)
         monitor_loop()
 
-      WebActors.receive ["to_worker", WebActors.ANY], (m) ->
-        event = m[1]
-        track_link_events(event)
-        worker.postMessage(event)
+      WebActors.receive {event_name: "unlink"}, (event) ->
+        track_unlink(event.target_id, event.peer_id)
         monitor_loop()
 
-      WebActors.receive ["killed", WebActors.ANY], (m) ->
+      WebActors.receive ["exited", WebActors.ANY], (m) ->
         actor_id = m[1]
         track_exit(actor_id)
         if actor_id is worker_id
           WebActors.sendSelf "terminate"
         monitor_loop()
 
+    # catch up on outstanding link/unlink events, then synthesize kills and exit
+    termination_loop = ->
+      WebActors.receive {event_name: "link"}, (event) ->
+        track_link(event.target_id, event.peer_id)
+        termination_loop()
+
+      WebActors.receive {event_name: "unlink"}, (event) ->
+        track_unlink(event.target_id, event.peer_id)
+        termination_loop()
+
+      WebActors.receive "terminated", ->
+        # synthesize kills from actors in terminated worker
+        for actor_id, links of worker_links.links
+          for peer_id, flag of links
+            synthesize_kill(peer_id, actor_id, "Worker #{worker_id} terminated")
+
     monitor_loop()
 
   monitors_by_worker[worker_id] = monitor_id
 
-  # set up event routing to/from the worker via the monitor
+  # set up event routing to/from the worker
+
   worker.onmessage = (event) ->
     event = event.data
-    if event.event_name is "worker.error"
+    event_name = event.event_name
+    if event_name is "worker.error"
       WebActors._reportError(event.message)
     else
-      WebActors.send monitor_id, ["from_worker", event]
+      if event_name is "link" or event_name is "unlink"
+        WebActors.send monitor_id, event
+      WebActors._injectEvent(event)
 
   WebActors._registerGateway worker_prefix, (event) ->
-    WebActors.send monitor_id, ["to_worker", event]
+    event_name = event.event_name
+    if event_name is "link" or event_name is "unlink"
+      WebActors.send monitor_id, event
+    worker.postMessage(event)
 
   # kick off the worker
   worker.postMessage(worker_prefix)

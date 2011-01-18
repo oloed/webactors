@@ -52,6 +52,44 @@ describe "WebActors Workers", ->
 
     waitsFor -> passed
 
+  it "should copy messages from workers immediately on sending", ->
+    received = null
+
+    WebActors.spawn ->
+      worker_id = spawn_helper 'spawnLinkedWorker', ->
+        WebActors.receive WebActors.ANY, (parent_id) ->
+          message = {modified: false}
+          WebActors.send parent_id, message
+          message.modified = true
+          WebActors.receive WebActors.ANY, ->
+      WebActors.send worker_id, WebActors.self()
+      WebActors.receive WebActors.ANY, (message) ->
+        received = message
+
+    waitsFor -> received isnt null
+
+    runs -> expect(received.modified).toBeFalsy()
+
+  it "should copy messages to workers immediately on sending", ->
+    received = null
+
+    WebActors.spawn ->
+      worker_id = spawn_helper 'spawnLinkedWorker', ->
+        WebActors.receive WebActors.ANY, (parent_id) ->
+          WebActors.receive WebActors.ANY, (message) ->
+            WebActors.send parent_id, message
+            WebActors.receive WebActors.ANY, ->
+      WebActors.send worker_id, WebActors.self()
+      message = {modified: false}
+      WebActors.send worker_id, message
+      message.modified = true
+      WebActors.receive WebActors.ANY, (returned_message) ->
+        received = returned_message
+
+    waitsFor -> received isnt null
+
+    runs -> expect(received.modified).toBeFalsy()
+
 describe "WebActors.terminateWorker", ->
   it "should forcibly kill an idle worker", ->
     passed = false
