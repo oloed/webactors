@@ -221,8 +221,9 @@ the message about falling into a pit and terminate.
 Only one or the other of these callbacks will fire --
 never both.  If a message matches multiple outstanding
 receives (which is possible when wildcards are used), the
-callback associated with the first matching pattern will
-be called.
+callback supplied to the first matching receive (in this
+case, "go left") will be called.  In other words, earlier
+receives take precedence.
 
 ### Chained Receives (Sequencing)
 
@@ -242,7 +243,200 @@ receive (and act upon) the "up" message before it
 receives "down", regardless of the order in which those
 messages were originally sent.
 
+### Loops and State Machines
+
+Often, you'll want an actor to continue receiving the same
+sort of messages indefinitely.  For example, you might
+want to write something like this:
+
+    var running = true;
+    while (running) {
+      receive("say hello", function () {
+        alert("Hello!")
+      });
+      receive("go away", function () {
+        running = false;
+      });
+    }
+
+Of course, this won't actually work, since receives are
+non-blocking, and in any case no callbacks can get called
+until we return to the browser event loop.
+
+A working version looks something like this:
+
+    function helloLoop() {
+      receive("say hello", function () {
+        alert("Hello!");
+        helloLoop(); # re-establish the same callbacks
+      });
+      receive("go away", function () {
+        # do nothing, and let the actor exit
+      });
+    }
+    helloLoop(); # start the loop
+
+The observant will recognize this as a state machine with
+a single non-terminal state.
+
+    START -> helloLoop
+    helloLoop -> ["say hello"] -> helloLoop
+    helloLoop -> ["go away"] -> END
+
+More complicated state machines can be built up in the
+same way:
+
+    function entryHall() {
+      receive(["go", "south"], function () { goTo(jungle); });
+      receive(["go", "north"], function () { goTo(stairway); });
+      desc = "You are in a dingy stone hallway. " +
+             "Behind you, to the south, is the exit. " +
+             "Ahead, to the north, stairs descend into darkness.";
+      doDefaultTransitions(entryHall, desc);
+    }
+
+    function jungle() {
+      alert("You escape into the jungle!")
+    }
+
+    function stairway() {
+      receive(["go", "east"], function () { goTo(treasure); });
+      receive(["go", "south"], function () { goTo(entryHall); });
+      receive(["go", "north"], function () { goTo(pit); });
+      desc = "The stairs run downwards, from south to north. " +
+             "There is also a narrow doorway to the east.";
+      doDefaultTransitions(stairway, desc);
+    }
+
+    function treasure() {
+      alert("You found the treasure!");
+    }
+
+    function pit() {
+      alert("The stairs give way beneath you and you fall into a pit!");
+    }
+
+    function goTo(location) {
+      sendSelf("look");
+      location();
+    }
+
+    function doDefaultTransitions(location, desc) {
+      receive("look", function () {
+        alert(desc);
+        location();
+      });
+      receive(["go", ANY], function () {
+        alert("You can't go that way!");
+        location();
+      });
+    }
+
+    # how you would actually start a game
+    function gameActor {
+      goTo(entryHall);
+    }
+    spawn(gameActor);
+
+When things get more complicated, it's often a better idea
+to represent states as objects, and explicitly keep track of
+which state is current in order to faciliate unit testing
+and debugging.
+
+    var JUNGLE_ENDING, PIT_ENDING, TREASURE_ENDING;
+
+    function Game() {
+      this.locations = {
+        entryHall: new EntryHall(this),
+        jungle: JUNGLE_ENDING,
+        stairway: new Stairway(this),
+        treasure: TREASURE_ENDING,
+        pit: PIT_ENDING
+      };
+    }
+    Game.prototype.start = function () {
+      this.goTo("entryHall");
+    }
+    Game.prototype.goTo = function (label) {
+      this.currentLocation = this.locations[label];
+      this.currentLocation.enter();
+    }
+
+    function Location() {}
+    Location.prototype.enter = function () {
+      sendSelf("look");
+      this.doTransitions();
+    }
+
+    function EntryHall(game) {
+      this.game = game;
+      this.desc = "You are in a dingy stone hallway. " +
+                  "Behind you, to the south, is the exit. " +
+                  "Ahead, to the north, stairs descend into darkness.";
+    }
+    EntryHall.prototype = new Location();
+    EntryHall.prototype.doTransitions = function () {
+      var game = this.game;
+      receive(["go", "north"], function () { game.goTo("stairway"); });
+      receive(["go", "south"], function () { game.goTo("jungle"); });
+      doDefaultTransitions(this);
+    }
+
+    function Stairway(game) {
+      this.game = game;
+      this.desc = "The stairs run downwards, from south to north. " +
+                  "There is also a narrow doorway to the east.";
+    }
+    Stairway.prototype = new Location();
+    Stairway.prototype.doTransitions = function () {
+      var game = this.game;
+      receive(["go", "north"], function () { game.goTo("pit"); });
+      receive(["go", "south"], function () { game.goTo("entryHall"); });
+      receive(["go", "east"], function () { game.goTo("treasure"); });
+      doDefaultTransitions(this);
+    }
+
+    function doDefaultTransitions(location) {
+      receive("look", function () {
+        alert(location.desc);
+        location.doTransitions();
+      });
+      receive(["go", ANY], function () {
+        alert("You can't go that way!");
+        location.doTransitions();
+      });
+    }
+
+    function Ending(message) {
+      this.message = message;
+    }
+    Ending.prototype.enter = function () {
+      alert(this.message);
+    }
+
+    JUNGLE_ENDING = new Ending("You escape into the jungle!");
+    PIT_ENDING = new Ending("The stairs give way beneath you and you fall into a pit!");
+    TREASURE_ENDING = new Ending("You found the treasure!");
+
+    # how you would actually start a game
+    function gameActor() {
+      var game = new Game();
+      game.start();
+    }
+    spawn(gameActor);
+
+This sort of arrangement permits the rooms and endings to
+be unit-tested individually, and as a bonus you can easily
+inspect the current room from a debugger.
+
+If you find yourself faced with a hierarchical state
+machine, you may find it better to model as a set of
+cooperating actors rather than trying to cram
+everything into one.
+
 ### Supervision Trees
+
+[write about supervision trees here]
 
 # API Reference
 
@@ -379,7 +573,8 @@ When used in a pattern, `ANY` matches any value.
 ## Web Workers
 
 In browsers that support it, WebActors offers support for
-true parallelism through the use of HTML5 Web Workers.
+true multicore parallelism through the use of HTML5 Web
+Workers.
 
 Not only can WebActors be used within a worker, WebActors
 itself provides an actor-based API for managing Web
@@ -396,11 +591,13 @@ be used to perform background tasks without blocking the
 browser UI.
 
 In most respects, the spawned actor behaves like any
-other WebActors actor, and can interoperate with
-actors in the worker's parent VM.  The main difference
-is that any messages crossing the worker/parent boundary
-are copied using `postMessage`, so some message features
-(such as classes) may not be preserved.
+other WebActors actor; it can spawn more actors within
+the worker, and can also interoperate with actors in the
+worker's parent VM.  The main difference is that any
+messages crossing the worker/parent boundary are
+transferred using `postMessage`, so messages are copied
+rather than sent by reference, and messages containing
+non-POD objects may not be received as expected.
 
 ### WebActors.spawnLinkedWorker(scriptUrl)
 
@@ -418,7 +615,7 @@ The passed-in function supplies the body of the actor
 returned by `spawnWorker`.
 
 When this actor exits, the worker will terminate, killing
-any other actors inside!
+any other actors inside the worker!
 
 ### WebActors.terminateWorker(actorId)
 
