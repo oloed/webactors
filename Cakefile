@@ -14,6 +14,21 @@ EACCES = binding.EACCES
 getsockname = binding.getsockname
 errnoException = binding.errnoException
 
+VERSION = "0.1"
+MAINTAINERS = [
+  {name: "MenTaLguY", email: "mental@rydia.net", web: "http://moonbase.rydia.net"}]
+
+PACKAGE_SPEC =
+  name: "webactors"
+  version: VERSION
+  description: "WebActors is an implementation of the Actor model for Javascript."
+  keywords: ["multicore", "actors", "concurrency"]
+  maintainers: MAINTAINERS
+  licenses: [{type: "MIT", url: "http://www.opensource.org/licenses/mit-license"}]
+  implements: ["CommonJS/Modules/1.0"]
+  directories:
+    lib: "."
+
 coffeefiles = (dir) ->
   "#{dir}/#{f}" for f in fs.readdirSync dir when /\.coffee$/.test f
 
