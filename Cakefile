@@ -5,6 +5,7 @@ sys    = require "sys"
 http   = require "http"
 url    = require "url"
 spawn  = require("child_process").spawn
+exec   = require("child_process").exec
 
 binding = process.binding('net')
 
@@ -14,20 +15,22 @@ EACCES = binding.EACCES
 getsockname = binding.getsockname
 errnoException = binding.errnoException
 
-VERSION = "0.1"
-MAINTAINERS = [
-  {name: "MenTaLguY", email: "mental@rydia.net", web: "http://moonbase.rydia.net"}]
+PROJECT = "webactors"
+VERSION = "0.0.0"
+AUTHOR =
+  name: "MenTaLguY"
+  email: "mental@rydia.net"
+  url: "http://moonbase.rydia.net"
 
-PACKAGE_SPEC =
-  name: "webactors"
+NPM_PACKAGE_SPEC =
+  name: PROJECT
   version: VERSION
-  description: "WebActors is an implementation of the Actor model for Javascript."
-  keywords: ["multicore", "actors", "concurrency"]
-  maintainers: MAINTAINERS
-  licenses: [{type: "MIT", url: "http://www.opensource.org/licenses/mit-license"}]
-  implements: ["CommonJS/Modules/1.0"]
+  author: AUTHOR
+  description: "WebActors is an implementation of the actor model for concurrent programming."
+  keywords: ["concurrency", "actor"]
+  main: "lib/webactors"
   directories:
-    lib: "."
+    lib: "./lib"
 
 coffeefiles = (dir) ->
   "#{dir}/#{f}" for f in fs.readdirSync dir when /\.coffee$/.test f
@@ -46,11 +49,31 @@ compile_webactors_js = ->
       throw e
   compiled.join("\n")
 
+mkdir_p = (path, callback) ->
+  p = spawn('mkdir', ['-p', '--', path])
+  p.on 'exit', ->
+    callback()
+ 
 task "build", "Build delectable files.", ->
   src = compile_webactors_js()
-  fs.mkdir "dist", 0755, (err) ->
-    fs.writeFile "dist/webactors.js", src, ->
-      fs.writeFile "dist/webactors.min.js", jsmin(src)
+  versioned_package = "#{PROJECT}-#{VERSION}"
+
+  standalone_dir = "dist/standalone"
+  mkdir_p standalone_dir, ->
+    fs.writeFileSync "#{standalone_dir}/#{versioned_package}.js", src
+    fs.writeFileSync "#{standalone_dir}/#{versioned_package}.min.js", jsmin(src)
+
+  npm_dir = "dist/npm"
+  npm_package_dir = "#{npm_dir}/#{versioned_package}"
+  npm_lib_dir = "#{npm_package_dir}/lib"
+  mkdir_p npm_lib_dir, ->
+    package_json = JSON.stringify(NPM_PACKAGE_SPEC)
+    fs.writeFileSync "#{npm_package_dir}/package.json", package_json
+    fs.writeFileSync "#{npm_lib_dir}/webactors.js", src
+    exec("cd #{npm_dir} && tar zcvf #{versioned_package}.tar.gz #{versioned_package}")
+
+task "clean", "Clean dirty leftovers.", ->
+  spawn('rm', ['-rf', 'dist'])
 
 prohibit_bad_paths = (path, cb) ->
   if path.search(/\.\./) isnt -1 or path.substr(path.length - 1, 1) is "/"
@@ -165,8 +188,3 @@ task "spec", "Serve yummy specs.", ->
     spec_url = "http://localhost:#{address.port}/SpecRunner.html"
     sys.print("Serving at #{spec_url}\n")
     spawn('xdg-open', [spec_url])
-
-task "clean", "Clean dirty leftovers.", ->
-  files = jsfiles("dist").concat(jsfiles "src").concat jsfiles("spec")
-  fs.unlinkSync f for f in files
-  fs.rmdirSync "dist"
