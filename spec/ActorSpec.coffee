@@ -296,7 +296,7 @@ describe "A WebActors Actor", ->
 
     waitsFor -> actor_id is null
 
-describe "WebActors.injectEvent", ->
+describe "WebActors._injectEvent", ->
   it "should inject message events", ->
     received = []
 
@@ -304,7 +304,7 @@ describe "WebActors.injectEvent", ->
       WebActors.receive ANY, (message) ->
         received.push(message)
 
-    WebActors.injectEvent {target_id:actor_id, event_name:"send", message:"foobar"}
+    WebActors._injectEvent {target_id:actor_id, event_name:"send", message:"foobar"}
 
     waitsFor -> received.length > 0
 
@@ -319,7 +319,7 @@ describe "WebActors.injectEvent", ->
         received.push(message)
 
     actor_b_id = WebActors.spawn ->
-      WebActors.injectEvent {target_id:actor_b_id, event_name:"link", peer_id:actor_a_id}
+      WebActors._injectEvent {target_id:actor_b_id, event_name:"link", peer_id:actor_a_id}
 
     waitsFor -> received.length > 0
 
@@ -335,7 +335,7 @@ describe "WebActors.injectEvent", ->
 
     actor_b_id = WebActors.spawn ->
       WebActors.link actor_a_id
-      WebActors.injectEvent {target_id:actor_b_id, event_name:"unlink", peer_id:actor_a_id}
+      WebActors._injectEvent {target_id:actor_b_id, event_name:"unlink", peer_id:actor_a_id}
 
     setTimeout((-> WebActors.send(actor_a_id, "passed")), 0.5)
 
@@ -355,7 +355,7 @@ describe "WebActors.injectEvent", ->
 
     waitsFor -> ready
 
-    runs -> WebActors.injectEvent {target_id:actor_id, event_name:"kill", killer_id:"foobar", reason:"baz"}
+    runs -> WebActors._injectEvent {target_id:actor_id, event_name:"kill", killer_id:"foobar", reason:"baz"}
 
     waitsFor -> received.length > 0
 
@@ -363,16 +363,16 @@ describe "WebActors.injectEvent", ->
 
 describe "WebActors routing", ->
   afterEach ->
-    WebActors.unregisterGateway "foo"
-    WebActors.unregisterGateway "foo:bar"
+    WebActors._unregisterGateway "foo"
+    WebActors._unregisterGateway "foo:bar"
 
   it "should allow unregistering unregistered prefixes", ->
-    WebActors.unregisterGateway "blah"
+    WebActors._unregisterGateway "blah"
 
   it "should allow registering gateways by prefix", ->
     received = []
 
-    WebActors.registerGateway "foo", (event) ->
+    WebActors._registerGateway "foo", (event) ->
       received.push event
     WebActors.send "hoge:0", "1234"
     WebActors.send "foo:0", "abc123"
@@ -384,7 +384,7 @@ describe "WebActors routing", ->
   it "should route on partial prefixes", ->
     received = []
 
-    WebActors.registerGateway "foo", (event) ->
+    WebActors._registerGateway "foo", (event) ->
       received.push event
     WebActors.send "hoge:0", "1234"
     WebActors.send "foo:bar:0", "abc123"
@@ -396,9 +396,9 @@ describe "WebActors routing", ->
   it "should give priority to longer prefixes", ->
     received = []
 
-    WebActors.registerGateway "foo", (event) ->
+    WebActors._registerGateway "foo", (event) ->
       received.push ["short", event]
-    WebActors.registerGateway "foo:bar", (event) ->
+    WebActors._registerGateway "foo:bar", (event) ->
       received.push ["long", event]
     WebActors.send "hoge:0", "1234"
     WebActors.send "foo:0", "xyz789"
@@ -412,7 +412,7 @@ describe "WebActors routing", ->
   it "should route link and kill events", ->
     received = []
 
-    WebActors.registerGateway "foo", (event) ->
+    WebActors._registerGateway "foo", (event) ->
       received.push event
     actor_id = WebActors.spawn ->
       WebActors.link "foo:0"
@@ -425,7 +425,7 @@ describe "WebActors routing", ->
   it "should route unlink events", ->
     received = []
 
-    WebActors.registerGateway "foo", (event) ->
+    WebActors._registerGateway "foo", (event) ->
       received.push event
     actor_id = WebActors.spawn ->
       WebActors.link "foo:0"
@@ -436,20 +436,20 @@ describe "WebActors routing", ->
     runs -> expect(received).toEqual([{target_id:"foo:0", event_name:"link", peer_id:actor_id},
                                       {target_id:"foo:0", event_name:"unlink", peer_id:actor_id}])
 
-describe "WebActors.setDefaultGateway", ->
+describe "WebActors._setDefaultGateway", ->
   afterEach ->
-    WebActors.setDefaultGateway null
-    WebActors.unregisterGateway "foo"
+    WebActors._setDefaultGateway null
+    WebActors._unregisterGateway "foo"
 
   it "should affect routing for unknown prefixes", ->
     received = []
 
-    WebActors.registerGateway "foo", (event) ->
+    WebActors._registerGateway "foo", (event) ->
       received.push ["gateway", event]
-    WebActors.setDefaultGateway (event) ->
+    WebActors._setDefaultGateway (event) ->
       received.push ["default", event]
 
-    WebActors.send "#{WebActors.getLocalPrefix()}:bogus", "abc"
+    WebActors.send "#{WebActors._getLocalPrefix()}:bogus", "abc"
     WebActors.send "foo:0", "def"
     WebActors.send "bar:0", "ghi"
 
@@ -460,8 +460,8 @@ describe "WebActors.setDefaultGateway", ->
                                 ["default", {target_id:"bar:0", event_name:"send", message:"ghi"}]])
 
   it "should restore default behavior when null is passed", ->
-    WebActors.setDefaultGateway (args...) ->
-    WebActors.setDefaultGateway null
+    WebActors._setDefaultGateway (args...) ->
+    WebActors._setDefaultGateway null
 
     passed = false
 
@@ -473,21 +473,21 @@ describe "WebActors.setDefaultGateway", ->
 
     waitsFor -> passed
 
-describe "WebActors.getLocalPrefix", ->
+describe "WebActors._getLocalPrefix", ->
   it "should return the prefix being used for local actors", ->
     actor_id = WebActors.spawn ->
-    local_prefix = WebActors.getLocalPrefix()
+    local_prefix = WebActors._getLocalPrefix()
     local_prefix = "#{local_prefix}:"
     expect(actor_id.substr(0, local_prefix.length)).toEqual(local_prefix)
 
-describe "WebActors.setLocalPrefix", ->
+describe "WebActors._setLocalPrefix", ->
   afterEach ->
-    WebActors.setLocalPrefix "actor"
+    WebActors._setLocalPrefix "actor"
 
   it "should change the prefix used for local actors", ->
     ready = false
     local_prefix = "foo"
-    WebActors.setLocalPrefix local_prefix
+    WebActors._setLocalPrefix local_prefix
     actor_id = WebActors.spawn ->
       ready = true
 
@@ -497,17 +497,17 @@ describe "WebActors.setLocalPrefix", ->
       local_prefix = "#{local_prefix}:"
       expect(actor_id.substr(0, local_prefix.length)).toEqual(local_prefix)
 
-describe "WebActors.allocateChildPrefix", ->
+describe "WebActors._allocateChildPrefix", ->
   it "should return a prefix based on a key and the local prefix", ->
     key = "zorg"
-    local_prefix = WebActors.getLocalPrefix()
+    local_prefix = WebActors._getLocalPrefix()
     local_prefix = "#{local_prefix}:"
-    child_prefix = WebActors.allocateChildPrefix(key)
+    child_prefix = WebActors._allocateChildPrefix(key)
     expect(child_prefix.substr(0, local_prefix.length)).toEqual(local_prefix)
     expect(child_prefix.indexOf(key)).toBeGreaterThan(local_prefix.length-1)
 
   it "should return locally-unique prefixes", ->
     key = "zorg"
-    child_prefix_a = WebActors.allocateChildPrefix(key)
-    child_prefix_b = WebActors.allocateChildPrefix(key)
+    child_prefix_a = WebActors._allocateChildPrefix(key)
+    child_prefix_b = WebActors._allocateChildPrefix(key)
     expect(child_prefix_a).toNotEqual(child_prefix_b)

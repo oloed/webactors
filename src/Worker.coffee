@@ -54,12 +54,12 @@ synthesize_kill = (target_id, killer_id, reason) ->
     event_name: "kill"
     killer_id: killer_id
     reason: reason
-  WebActors.injectEvent event
+  WebActors._injectEvent event
 
 monitors_by_worker = {}
 
 spawnWorker = (script_url) ->
-  worker_prefix = WebActors.allocateChildPrefix("worker")
+  worker_prefix = WebActors._allocateChildPrefix("worker")
   worker_id = "#{worker_prefix}:0"
 
   worker = new Worker(script_url)
@@ -101,10 +101,10 @@ spawnWorker = (script_url) ->
       WebActors.receive ["from_worker", WebActors.ANY], (m) ->
         event = m[1]
         if event.event_name is "worker.error"
-          WebActors.reportError(event.message)
+          WebActors._reportError(event.message)
         else
           track_link_events(event)
-          WebActors.injectEvent(event)
+          WebActors._injectEvent(event)
 
       WebActors.receive ["to_worker", WebActors.ANY], (m) ->
         event = m[1]
@@ -122,7 +122,7 @@ spawnWorker = (script_url) ->
         delete monitors_by_worker[worker_id]
 
         # shut down routing to/from the worker
-        WebActors.unregisterGateway worker_prefix
+        WebActors._unregisterGateway worker_prefix
 
         # terminate the worker and enter cleanup phase
         worker.terminate()
@@ -132,10 +132,10 @@ spawnWorker = (script_url) ->
       WebActors.receive ["from_worker", WebActors.ANY], (m) ->
         event = m[1]
         if event.event_name is "worker.error"
-          WebActors.reportError(event.message)
+          WebActors._reportError(event.message)
         else
           track_link_events(event)
-          WebActors.injectEvent(event)
+          WebActors._injectEvent(event)
         monitor_loop()
 
       WebActors.receive ["to_worker", WebActors.ANY], (m) ->
@@ -158,7 +158,7 @@ spawnWorker = (script_url) ->
   # set up event routing to/from the worker via the monitor
   worker.onmessage = (event) ->
     WebActors.send monitor_id, ["from_worker", event.data]
-  WebActors.registerGateway worker_prefix, (event) ->
+  WebActors._registerGateway worker_prefix, (event) ->
     WebActors.send monitor_id, ["to_worker", event]
 
   # kick off the worker
@@ -172,7 +172,7 @@ spawnLinkedWorker = (script_url) ->
   worker_id
 
 initWorker = (body) -> 
-  WebActors.setErrorHandler (message) ->
+  WebActors._setErrorHandler (message) ->
     error_event =
       event_name: "worker.error"
       message: message
@@ -180,11 +180,11 @@ initWorker = (body) ->
 
   self.onmessage = (event) ->
     local_prefix = event.data
-    WebActors.setLocalPrefix local_prefix
+    WebActors._setLocalPrefix local_prefix
 
     self.onmessage = (event) ->
-      WebActors.injectEvent(event.data)
-    WebActors.setDefaultGateway (event) ->
+      WebActors._injectEvent(event.data)
+    WebActors._setDefaultGateway (event) ->
       self.postMessage(event)
 
     WebActors.spawn ->
