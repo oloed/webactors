@@ -3,6 +3,9 @@ WebActors = if require? and exports?
             else
               @WebActors ?= {}
 
+nextTick = (cb) ->
+  setTimeout(cb, 0)
+
 class NullActor
   constructor: ->
     @actor_id = null
@@ -61,7 +64,7 @@ class LocalActor
       cont = receiver(message)
       if cont
         @receivers = []
-        setTimeout(@wrap_cont(cont), 0)
+        nextTick(@wrap_cont(cont))
         return true
     return false
 
@@ -98,7 +101,7 @@ class LocalActor
 
   start: (body) ->
     register_actor @actor_id, this
-    setTimeout(@wrap_cont(body), 0)
+    nextTick(@wrap_cont(body))
 
   shutdown: (reason) ->
     @killed = true
