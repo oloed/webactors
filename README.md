@@ -35,10 +35,9 @@ everything.
 
 The output files are:
 
-  * dist/webactors.js - uncompressed version
-  * dist/webactors.min.js - minfied version
-
-The two should be functionally equivalent.
+  * dist/npm/webactors-#{version}.tar.gz - an npm package
+  * dist/standalone/webactors-#{version}.js - for use in the browser
+  * dist/standalone/webactors-#{version}.min.js - minfied version
 
 # Tutorial
 
