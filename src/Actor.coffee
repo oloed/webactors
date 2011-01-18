@@ -77,8 +77,7 @@ class LocalActor
       saved_actor = current_actor
       current_actor = NULL_ACTOR
       try
-        message = @kill_handler(killer_id, reason)
-        WebActors.send @actor_id, message
+        @kill_handler.call(@state, killer_id, reason)
       catch e
         @shutdown(e)
       finally
@@ -87,7 +86,7 @@ class LocalActor
       @shutdown(reason)
 
   trapKill: (handler) ->
-    @kill_handler = handler
+    @kill_handler = WebActors.sendbackTo(@actor_id, handler)
 
   receive: (pattern, cont) ->
     return if @killed
