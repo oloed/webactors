@@ -67,7 +67,7 @@ spawnWorker = (script_url) ->
   # launch a monitor to handle termination and cleanup
   monitor_id = WebActors.spawn ->
     WebActors.trapKill (killer_id, reason) ->
-      ["exited", killer_id]
+      ["killed", killer_id]
     WebActors.link worker_id
 
     worker_links = new LinkMap()
@@ -100,11 +100,9 @@ spawnWorker = (script_url) ->
     termination_loop = ->
       WebActors.receive ["from_worker", WebActors.ANY], (m) ->
         event = m[1]
-        if event.event_name is "worker.error"
-          WebActors._reportError(event.message)
-        else
-          track_link_events(event)
-          WebActors._injectEvent(event)
+        track_link_events(event)
+        WebActors._injectEvent(event)
+        termination_loop()
 
       WebActors.receive ["to_worker", WebActors.ANY], (m) ->
         event = m[1]
@@ -121,7 +119,7 @@ spawnWorker = (script_url) ->
       WebActors.receive "terminate", ->
         delete monitors_by_worker[worker_id]
 
-        # shut down routing to/from the worker
+        # shut down routing to the worker
         WebActors._unregisterGateway worker_prefix
 
         # terminate the worker and enter cleanup phase
@@ -131,11 +129,8 @@ spawnWorker = (script_url) ->
 
       WebActors.receive ["from_worker", WebActors.ANY], (m) ->
         event = m[1]
-        if event.event_name is "worker.error"
-          WebActors._reportError(event.message)
-        else
-          track_link_events(event)
-          WebActors._injectEvent(event)
+        track_link_events(event)
+        WebActors._injectEvent(event)
         monitor_loop()
 
       WebActors.receive ["to_worker", WebActors.ANY], (m) ->
@@ -144,7 +139,7 @@ spawnWorker = (script_url) ->
         worker.postMessage(event)
         monitor_loop()
 
-      WebActors.receive ["exited", WebActors.ANY], (m) ->
+      WebActors.receive ["killed", WebActors.ANY], (m) ->
         actor_id = m[1]
         track_exit(actor_id)
         if actor_id is worker_id
@@ -157,7 +152,12 @@ spawnWorker = (script_url) ->
 
   # set up event routing to/from the worker via the monitor
   worker.onmessage = (event) ->
-    WebActors.send monitor_id, ["from_worker", event.data]
+    event = event.data
+    if event.event_name is "worker.error"
+      WebActors._reportError(event.message)
+    else
+      WebActors.send monitor_id, ["from_worker", event]
+
   WebActors._registerGateway worker_prefix, (event) ->
     WebActors.send monitor_id, ["to_worker", event]
 
