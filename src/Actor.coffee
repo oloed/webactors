@@ -299,12 +299,10 @@ setErrorHandler = (callback) ->
   error_handler = callback
 
 sendback = (f) ->
-  actor_id = self()
-  sendbackTo actor_id, f
+  sendbackTo self(), f
 
 sendbackTo = (actor_id, f) ->
-  (args...) ->
-    WebActors.send actor_id, f.apply(this, args)
+  -> WebActors.send actor_id, f.apply(this, arguments)
 
 WebActors.spawn = spawn
 WebActors.spawnLinked = spawnLinked
