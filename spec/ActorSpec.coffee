@@ -296,6 +296,35 @@ describe "A WebActors Actor", ->
 
     waitsFor -> actor_id is null
 
+describe "WebActors.sendback", ->
+  it "should send messages to creating actor based on callback arguments", ->
+    callback = null
+    passed = false
+
+    WebActors.spawn ->
+      callback = WebActors.sendback (args...) -> args
+      WebActors.receive ["foo", "bar"], ->
+        passed = true
+
+    waitsFor -> callback
+
+    runs -> callback("foo", "bar")
+
+    waitsFor -> passed
+
+describe "WebActors.sendbackTo", ->
+  it "should send messages to designated actor based on callback arguments", ->
+    passed = false
+
+    actor_id = WebActors.spawn ->
+      WebActors.receive ["foo", "bar"], ->
+        passed = true
+
+    callback = WebActors.sendbackTo actor_id, (args...) -> args
+    callback("foo", "bar")
+
+    waitsFor -> passed
+
 describe "WebActors._injectEvent", ->
   it "should inject message events", ->
     received = []

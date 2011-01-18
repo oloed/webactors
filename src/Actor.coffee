@@ -298,6 +298,14 @@ reportError = (message) ->
 setErrorHandler = (callback) ->
   error_handler = callback
 
+sendback = (f) ->
+  actor_id = self()
+  sendbackTo actor_id, f
+
+sendbackTo = (actor_id, f) ->
+  (args...) ->
+    WebActors.send actor_id, f.apply(this, args)
+
 WebActors.spawn = spawn
 WebActors.spawnLinked = spawnLinked
 WebActors.send = send
@@ -308,6 +316,8 @@ WebActors.trapKill = trapKill
 WebActors.kill = kill
 WebActors.link = link
 WebActors.unlink = unlink
+WebActors.sendback = sendback
+WebActors.sendbackTo = sendbackTo
 
 WebActors._injectEvent = injectEvent
 WebActors._registerGateway = registerGateway

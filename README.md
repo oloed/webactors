@@ -453,6 +453,7 @@ rule are:
   * `WebActors.spawn`
   * `WebActors.send`
   * `WebActors.kill`
+  * `WebActors.sendbackTo`
 
 ### WebActors.spawn(body) -> actorId
 
@@ -553,6 +554,28 @@ Note that kills don't, in themselves, break links.  If an
 actor is sent a kill message by an actor it is linked to,
 the link will remain in place until the actor exits or
 it calls `unlink`.
+
+## Callbacks and "Sendbacks"
+
+Most Javascript APIs are heavily callback-based, but it
+isn't possible to run a callback in the context of an
+actor.  However, WebActors includes utilities for bridging
+the gap between callbacks and actors.
+
+### WebActors.sendback(function (args...) { ... })
+
+Generates a callback function which sends a message to the
+current actor (at the time `sendback` is called).  The
+content of the message is determined by what the function
+returns passed to `sendback`; it receives the callback
+arguments.
+
+### WebActors.sendbackTo(actorId, function (args...) { ... })
+
+Like `sendback`, but `sendbackTo` allows you to set up
+the callback to send a message to a different actor. 
+
+`sendbackTo` may be called outside an actor.
 
 ## Pattern Matching
 
