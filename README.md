@@ -87,8 +87,10 @@ in the new actor's context, and returns an id representing
 the newly created actor.  This id can be used to submit
 messages to the new actor's mailbox.
 
+```javascript
     var actor = WebActors.spawn(aCallback); // create an actor
     WebActors.send(actor, "a message"); // send it a message
+```
 
 ### Receiving Messages
 
@@ -96,12 +98,14 @@ To receive messages, use the `WebActors.receive`
 function.  It takes a pattern and a callback to be invoked
 when a matching message is received.
 
+```javascript
     function aCallback() {
       // ANY matches anything
       WebActors.receive(WebActors.ANY, function (message) {
         alert(message);
       });
     }
+```
 
 If an actor callback sets up a new callback via receive,
 then the actor will continue with the new callback once
@@ -129,6 +133,7 @@ JavaScript values.
 Used as a pattern, any primitive value matches an
 equivalent primitive value (as determined by `===`).
 
+```
     3 matches 3
     "foo" matches "foo"
 
@@ -136,6 +141,7 @@ equivalent primitive value (as determined by `===`).
     "3" does not match 3
     3 does not match "3"
     "foo" does not match "bar"
+```
 
 #### Arrays
 
@@ -143,10 +149,12 @@ When used as a pattern, an Array matches an array with
 the same length and matching elements (as determined by the
 pattern-matching rules)
 
+```
     [1, 2, 3] matches [1, 2, 3]
 
     [1, 2, 3] does not match [4, 5, 6]
     [1, 2, 3] does not match [1, 2, 3, 4]
+```
 
 #### Objects
 
@@ -154,12 +162,14 @@ When used as a pattern, an object matches any object with
 the same fields and matching values.  (The matched object
 may have other fields in addition.)
 
+```
     {a: 1} matches {a: 1}
     {a: 1} matches {a: 1, b: 2}
 
     {a: 1} does not match {}
     {a: 1} does not match {a: 3}
     {a: 1} does not match {b: 1}
+```
 
 #### Wildcards
 
@@ -179,6 +189,7 @@ If you aren't already in the habit of doing so, it can
 be useful (and occasionally more readable) to define local
 aliases for functions defined on library objects.
 
+```javascript
     (function () {
     var spawn = WebActors.spawn;
     var receive = WebActors.receive;
@@ -195,6 +206,7 @@ aliases for functions defined on library objects.
     send(actor, "a message"); // send it a message
 
     })();
+```
 
 Subsequent code samples will assume that such aliases have
 already been defined.
@@ -205,12 +217,14 @@ An actor can also choose between alternatives based on
 the specific message received. (This is a fragment,
 rather than a complete example.)
 
+```javascript
     receive("go left", function () {
       alert("You fall off a cliff.");
     });
     receive("go right", function () {
       alert("You stumble into a pit full of spikes.");
     });
+```
 
 In this case, if the actor receives "go left", it will
 print the message about falling off a cliff and
@@ -228,14 +242,17 @@ receives take precedence.
 
 An actor can also specifically choose the order in which
 it responds to messages by chaining calls to receive.
+
 For example:
 
+```javascript
     receive("up", function () {
       alert("Going up!");
       receive("down", function () {
         alert("Going down!");
       });
     });
+```
 
 An arrangement like this guarantees that the actor will 
 receive (and act upon) the "up" message before it
@@ -248,6 +265,7 @@ Often, you'll want an actor to continue receiving the same
 sort of messages indefinitely.  For example, you might
 want to write something like this:
 
+```javascript
     var running = true;
     while (running) {
       receive("say hello", function () {
@@ -257,6 +275,7 @@ want to write something like this:
         running = false;
       });
     }
+```
 
 Of course, this won't actually work, since receives are
 non-blocking, and in any case no callbacks can get called
@@ -264,6 +283,7 @@ until we return to the browser event loop.
 
 A working version looks something like this:
 
+```javascript
     function helloLoop() {
       receive("say hello", function () {
         alert("Hello!");
@@ -274,17 +294,21 @@ A working version looks something like this:
       });
     }
     helloLoop(); # start the loop
+```
 
 The observant will recognize this as a state machine with
 a single non-terminal state.
 
+```
     START -> helloLoop
     helloLoop -> ["say hello"] -> helloLoop
     helloLoop -> ["go away"] -> END
+```
 
 More complicated state machines can be built up in the
 same way:
 
+```javascript
     function entryHall() {
       receive(["go", "south"], function () { goTo(jungle); });
       receive(["go", "north"], function () { goTo(stairway); });
@@ -336,12 +360,14 @@ same way:
       goTo(entryHall);
     }
     spawn(gameActor);
+```
 
 When things get more complicated, it's often a better idea
 to represent states as objects, and explicitly keep track of
 which state is current in order to faciliate unit testing
 and debugging.
 
+```javascript
     var JUNGLE_ENDING, PIT_ENDING, TREASURE_ENDING;
 
     function Game() {
@@ -423,6 +449,7 @@ and debugging.
       game.start();
     }
     spawn(gameActor);
+```
 
 This sort of arrangement permits the rooms and endings to
 be unit-tested individually, and as a bonus you can easily
