@@ -287,13 +287,13 @@ A working version looks something like this:
     function helloLoop() {
       receive("say hello", function () {
         alert("Hello!");
-        helloLoop(); # re-establish the same callbacks
+        helloLoop(); // re-establish the same callbacks
       });
       receive("go away", function () {
-        # do nothing, and let the actor exit
+        // do nothing, and let the actor exit
       });
     }
-    helloLoop(); # start the loop
+    helloLoop(); // start the loop
 ```
 
 The observant will recognize this as a state machine with
@@ -355,7 +355,7 @@ same way:
       });
     }
 
-    # how you would actually start a game
+    // how you would actually start a game
     function gameActor {
       goTo(entryHall);
     }
@@ -443,7 +443,7 @@ and debugging.
     PIT_ENDING = new Ending("The stairs give way beneath you and you fall into a pit!");
     TREASURE_ENDING = new Ending("You found the treasure!");
 
-    # how you would actually start a game
+    // how you would actually start a game
     function gameActor() {
       var game = new Game();
       game.start();
